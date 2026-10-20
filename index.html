@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kablo Tip Asistanı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0EB; --sheet:#FAFBF8; --ink:#1D282C; --ink2:#55636A; --rule:#C9D0C8; --rule2:#DFE4DD;
+  --a:#16756C; --a-soft:#D6ECE8; --b:#8B3A68; --b-soft:#F1DDE8; --warn:#B86E00; --warn-soft:#F7E8CC;
+  --focus:#1F5FBF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#151B1D; --sheet:#1C2427; --ink:#E4EAE6; --ink2:#9AA8A9; --rule:#34403F; --rule2:#2A3436;
+    --a:#5CC2B5; --a-soft:#1E3A37; --b:#D88AB7; --b-soft:#3D2433; --warn:#E6A93E; --warn-soft:#3B2F18; --focus:#7FB0FF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#151B1D; --sheet:#1C2427; --ink:#E4EAE6; --ink2:#9AA8A9; --rule:#34403F; --rule2:#2A3436;
+  --a:#5CC2B5; --a-soft:#1E3A37; --b:#D88AB7; --b-soft:#3D2433; --warn:#E6A93E; --warn-soft:#3B2F18; --focus:#7FB0FF;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  font-size:16px;line-height:1.45;font-variant-numeric:tabular-nums;
+  background-image:linear-gradient(var(--rule2) 1px,transparent 1px),linear-gradient(90deg,var(--rule2) 1px,transparent 1px);
+  background-size:24px 24px;}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 64px}
+
+/* Başlık bloğu: teknik resim antet kutusu gibi */
+.titleblock{display:grid;grid-template-columns:1fr auto;border:1.5px solid var(--ink);background:var(--sheet)}
+.tb-main{padding:14px 18px;border-right:1.5px solid var(--ink)}
+.tb-main h1{margin:0;font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-.01em}
+.tb-main p{margin:4px 0 0;color:var(--ink2);font-size:15px}
+.tb-side{display:grid;grid-template-rows:1fr 1fr;min-width:250px}
+.tb-cell{padding:8px 14px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;justify-content:center}
+.tb-cell:last-child{border-bottom:0}
+.tb-cell small{color:var(--ink2);font-size:12px}
+.tb-cell b{font-size:17px;font-weight:600}
+.upload-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 0;font-size:14px;color:var(--ink2)}
+.btn{border:1.5px solid var(--ink);background:var(--sheet);padding:7px 14px;cursor:pointer;font-weight:600;border-radius:2px}
+.btn:hover{background:var(--ink);color:var(--sheet)}
+.btn.ghost{border-color:var(--rule);font-weight:500}
+.btn.ghost:hover{background:var(--rule2);color:var(--ink)}
+#status{min-height:1.4em}
+.pagepick{display:flex;gap:6px;align-items:center}
+.pagepick[hidden]{display:none}
+.pagepick select{border:1px solid var(--rule);background:var(--sheet);padding:5px 6px}
+#status.err{color:#C62828;font-weight:600}
+
+/* Komut satırı */
+.query{margin:22px 0 8px;display:flex;gap:0;border:1.5px solid var(--ink);background:var(--sheet)}
+.query label{padding:0 14px;display:flex;align-items:center;font-weight:700;border-right:1.5px solid var(--ink);white-space:nowrap}
+.query input{flex:1;min-width:0;border:0;background:transparent;padding:14px;font-size:20px}
+.query input:focus-visible{outline:none}
+.query:focus-within{box-shadow:0 0 0 3px var(--focus)}
+.query button{border:0;border-left:1.5px solid var(--ink);background:var(--ink);color:var(--sheet);padding:0 20px;font-weight:700;cursor:pointer}
+.hint{font-size:14px;color:var(--ink2);margin:0 0 14px}
+.typegrid{display:flex;flex-wrap:wrap;gap:4px}
+.typegrid button{min-width:44px;padding:5px 6px;border:1px solid var(--rule);background:var(--sheet);cursor:pointer;font-weight:600;font-size:14px;border-radius:2px}
+.typegrid button:hover{border-color:var(--ink)}
+.typegrid button[aria-pressed="true"]{background:var(--a);border-color:var(--a);color:#fff}
+.typegrid button.selB[aria-pressed="true"]{background:var(--b);border-color:var(--b)}
+.typegrid button.dead{color:var(--ink2);text-decoration:line-through}
+.modes{display:flex;gap:0;margin:22px 0 0;border-bottom:1.5px solid var(--ink)}
+.modes button{border:1.5px solid transparent;border-bottom:0;background:none;padding:9px 16px;cursor:pointer;font-weight:600;color:var(--ink2);margin-bottom:-1.5px}
+.modes button[aria-selected="true"]{border-color:var(--ink);background:var(--sheet);color:var(--ink)}
+.panel{background:var(--sheet);border:1.5px solid var(--ink);border-top:0;padding:20px}
+.empty{color:var(--ink2);padding:30px 0;text-align:center}
+
+/* Tip başlığı */
+.typehead{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:start;padding-bottom:16px;border-bottom:1.5px solid var(--ink);margin-bottom:18px}
+.tnum{font-size:64px;line-height:.9;font-weight:700;letter-spacing:-.03em}
+.tnum small{display:block;font-size:14px;letter-spacing:0;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.tdesc{font-size:20px;font-weight:600;margin:2px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.chip{border:1px solid var(--ink);padding:1px 8px;font-size:13px;font-weight:600;border-radius:999px}
+.chip.none{border-style:dashed;color:var(--ink2);font-weight:500}
+.chip.a{background:var(--a-soft);border-color:var(--a)}
+.chip.b{background:var(--b-soft);border-color:var(--b)}
+.meta{font-size:14px;color:var(--ink2);margin:0}
+.meta b{color:var(--ink);font-weight:600}
+
+/* Kablo grupları */
+.groups{display:grid;gap:14px}
+.grp{border:1px solid var(--rule);border-left:4px solid var(--ink)}
+.grp.alt{border-left-color:var(--warn);border-left-style:dashed}
+.grp header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--rule);background:var(--paper)}
+.grp h3{margin:0;font-size:17px;font-weight:700}
+.refs{font-size:14px;color:var(--ink2)}
+.refs b{color:var(--ink);font-weight:600}
+.altnote{margin:0;padding:6px 14px;background:var(--warn-soft);font-size:14px;border-bottom:1px solid var(--rule)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;font-size:12.5px;color:var(--ink2);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--rule)}
+td{padding:6px 10px;border-bottom:1px solid var(--rule2);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.conn{font-weight:500}
+td.conn .arr{color:var(--ink2);padding:0 4px}
+td.num{white-space:nowrap}
+
+/* Kablo çizimi */
+.wire{display:inline-block;position:relative;width:84px;height:var(--h,6px);border-radius:var(--h);vertical-align:middle;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.35)}
+.wire::before,.wire::after{content:"";position:absolute;top:50%;width:9px;height:max(2px,calc(var(--h) * .45));transform:translateY(-50%);background:linear-gradient(#d9d9d9,#9a9a9a)}
+.wire::before{left:-8px;border-radius:2px 0 0 2px}
+.wire::after{right:-8px;border-radius:0 2px 2px 0}
+.wirecell{padding-left:18px;padding-right:18px;width:120px}
+.colorname{white-space:nowrap}
+
+/* Karşılaştırma */
+.cmpbar{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:16px}
+.cmpbar label{display:flex;flex-direction:column;font-size:13px;color:var(--ink2);font-weight:600}
+.cmpbar select{font-size:18px;padding:8px;border:1.5px solid var(--ink);background:var(--sheet);font-weight:600}
+.cmpbar .vs{font-weight:700;font-size:20px;padding-top:16px}
+.cmphead{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--ink);margin-bottom:18px}
+.cmphead>div{padding:12px 16px}
+.cmphead>div:first-child{border-right:1.5px solid var(--ink);background:var(--a-soft)}
+.cmphead>div:last-child{background:var(--b-soft)}
+.cmphead .tnum{font-size:44px}
+.verdict{font-size:18px;font-weight:600;margin:0 0 18px;padding:10px 14px;border:1.5px solid var(--ink);background:var(--paper)}
+h2.sec{font-size:19px;margin:26px 0 10px;padding-bottom:4px;border-bottom:1.5px solid var(--ink);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+h2.sec .n{font-size:14px;color:var(--ink2);font-weight:600}
+.tagA,.tagB{display:inline-block;font-size:12px;font-weight:700;padding:1px 7px;border-radius:2px;color:#fff}
+.tagA{background:var(--a)} .tagB{background:var(--b)}
+.diffrow td{background:var(--warn-soft)}
+.side{font-size:14px}
+.side b{font-weight:600}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.split .col h3{font-size:16px;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.grplist{border:1px solid var(--rule)}
+.grplist table td:first-child{width:44%}
+.mark{font-weight:700;text-align:center;width:70px}
+.mark.y{color:var(--ink)} .mark.n{color:var(--ink2);font-weight:400}
+details.common{margin-top:10px;border:1px solid var(--rule)}
+details.common summary{cursor:pointer;padding:9px 14px;font-weight:600;background:var(--paper)}
+details.common[open] summary{border-bottom:1px solid var(--rule)}
+
+/* Matris */
+.matrix{overflow:auto;max-height:70vh;border:1px solid var(--rule)}
+.matrix table{font-size:13px;width:auto}
+.matrix th,.matrix td{border:1px solid var(--rule2);padding:4px 6px;text-align:center;white-space:nowrap}
+.matrix thead th{position:sticky;top:0;background:var(--sheet);z-index:2;cursor:pointer;color:var(--ink)}
+.matrix thead th:hover{background:var(--a-soft)}
+.matrix tbody th{position:sticky;left:0;background:var(--sheet);text-align:left;z-index:1;font-weight:500;color:var(--ink);max-width:260px;white-space:normal;min-width:220px}
+.matrix tbody th small{color:var(--ink2);display:block}
+.matrix td.on{background:var(--ink);color:var(--sheet);font-weight:700}
+.matrix .hl{outline:2px solid var(--a);outline-offset:-2px}
+
+
+/* Benzer tipler */
+.simbox{border:1.5px solid var(--ink);margin:0 0 20px;background:var(--paper)}
+.simhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px 0}
+.simhead h2{margin:0;font-size:18px}
+.simbox>.meta{padding:4px 14px 8px;font-size:13.5px}
+.seg{display:flex;border:1px solid var(--ink)}
+.seg button{border:0;background:var(--sheet);padding:4px 10px;cursor:pointer;font-weight:600;font-size:13px}
+.seg button+button{border-left:1px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.simtbl{background:var(--sheet)}
+.simtbl td{border-top:1px solid var(--rule2);border-bottom:0}
+.simtbl small{color:var(--ink2)}
+.simtbl .rank{width:34px;font-size:22px;font-weight:700;color:var(--ink2);text-align:center}
+.simbar{width:170px}
+.bar{display:block;height:8px;background:var(--rule2);margin-bottom:3px}
+.bar span{display:block;height:100%;background:var(--a)}
+.simdiff{min-width:150px}
+.simsel td{background:var(--b-soft)}
+.btn.small{padding:4px 10px;font-size:13.5px;white-space:nowrap}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px}
+.actions .meta{margin:0}
+.btn.primary{background:var(--ink);color:var(--sheet)}
+.btn.primary:hover{background:var(--a);border-color:var(--a)}
+@media (max-width:760px){.simbar{width:90px}.simtbl .rank{display:none}}
+@media (max-width:760px){
+  .titleblock{grid-template-columns:1fr}
+  .tb-main{border-right:0;border-bottom:1.5px solid var(--ink)}
+  .tb-side{grid-template-rows:auto;grid-template-columns:1fr 1fr;min-width:0}
+  .tb-cell{border-bottom:0;border-right:1px solid var(--rule)}
+  .typehead{grid-template-columns:1fr}
+  .tnum{font-size:48px}
+  .cmphead,.split{grid-template-columns:1fr}
+  .cmphead>div:first-child{border-right:0;border-bottom:1.5px solid var(--ink)}
+  .panel{padding:14px}
+  .wirecell{width:96px;padding-left:14px;padding-right:12px}
+  .wire{width:60px}
+}
+@media print{
+  body{background:#fff}
+  .upload-row,.query,.hint,.typegrid,.modes,.cmpbar{display:none}
+  .panel{border-top:1.5px solid var(--ink)}
+}
+/* Loading Overlay */
+#loadingOverlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  z-index: 9999; color: white; font-size: 20px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+#loadingOverlay.active {
+  opacity: 1; pointer-events: auto;
+}
+.spinner {
+  width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3);
+  border-radius: 50%; border-top-color: #fff;
+  animation: spin 1s linear infinite; margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">PDF yükleniyor...</div>
+</div>
+<div class="wrap">
+  <div class="titleblock">
+    <div class="tb-main">
+      <h1>Kablo tip asistanı <span style="font-size:16px; color:var(--warn); vertical-align:middle; margin-left:8px; padding:4px 8px; border:1px solid var(--warn); border-radius:4px;">Metraj/Boy Hesaplamalı Sürüm (Test)</span></h1>
+      <p id="drawTitle">Ana kablo grubu</p>
+      <div class="upload-row">
+        <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+        <button class="btn" id="uploadBtn" type="button">Yeni çizim yükle (PDF)</button>
+        <button class="btn ghost" id="resetBtn" type="button" hidden>Örnek çizime dön</button>
+        <label class="pagepick" id="pagePickWrap" hidden>Kablo tablosu sayfası
+          <select id="pagePick"><option value="">Otomatik bul</option></select></label>
+        <span id="status" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+    <div class="tb-side">
+      <div class="tb-cell"><small>Resim no</small><b id="docNo">–</b></div>
+      <div class="tb-cell"><small>Revizyon</small><b id="rev">–</b></div>
+    </div>
+  </div>
+
+  <form class="query" id="qform" autocomplete="off">
+    <label for="q">Tip</label>
+    <input id="q" inputmode="text" placeholder="55   ya da karşılaştırmak için: 15 55">
+    <button type="submit">Göster</button>
+  </form>
+  <p class="hint">Tek tip yazarsanız o tipin kablolarını, iki tip yazarsanız aralarındaki farkları gösterir. Aşağıdan da seçebilirsiniz.</p>
+  <div class="typegrid" id="typegrid"></div>
+
+  <div class="modes" role="tablist">
+    <button role="tab" id="tab-sum" aria-selected="true" data-mode="sum">Tip özeti</button>
+    <button role="tab" id="tab-cmp" aria-selected="false" data-mode="cmp">İki tipi karşılaştır</button>
+    <button role="tab" id="tab-mat" aria-selected="false" data-mode="mat">Tüm tablo</button>
+    <button role="tab" id="tab-len" aria-selected="false" data-mode="len">Metraj (Boy) Hesabı</button>
+  </div>
+  <section class="panel" id="panel" role="tabpanel"></section>
+</div>
+
+<script>
+// ===== UYGULAMA AYARLARI (KULLANICI BURADAN DEĞİŞTİREBİLİR) =====
+const APP_CONFIG = {
+  // Teknik resim adını bulmak için aranan başlıklar
+  titleKeywords: /ANA KABLO|KABLO GR/i,
+  // Matris tablosunu (sayfa 2 veya 3'teki ana tablo) bulmak için referans kelimesi
+  matrixTableAnchor: /^REF\.?$/i,
+  // Özellik tablosunu (opsiyonların olduğu tablo) bulmak için referans kelimeleri
+  featureTableAnchors: [/COMPET[İI]T[İI]VE/i, /STANDART/i],
+  // Hacim (volume) kodunu bulmak için aranan desen (Örn: P12, TEK_P54_1750W vb.)
+  volumeRegex: /[A-Z0-9_]*P\d+[A-Z0-9_]*/i,
+  // Sütunlardaki işaretlenecek özelliklerin listesi (varsayılan)
+  defaultFeatureNames: ['İVME SENSÖRÜ','STANDART DOZAGE','AQUATECH','DURUM LED','TURBLYTY','COMPETİTİVE DOZAGE','AQUASTOP','MİKRO FİBER FİLTRE + FLOWMETRE2','FLOWMETRE','JET']
+};
+
+// ===== Kablo matrisi ayrıştırıcı (pdf.js 5.x) =====
+async function parseDrawing(pdfjsLib, doc, onProgress, opts) {
+  opts = opts || {};
+  const OPS = pdfjsLib.OPS;
+  const log = (m) => onProgress && onProgress(m);
+  function mul(m, n) { return [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]]; }
+  async function getSegments(page, H) {
+    const ol = await page.getOperatorList();
+    const hs = [], vs = [];
+    let ctm = [1,0,0,1,0,0]; const stack = [];
+    const tp = (x, y) => [ctm[0]*x+ctm[2]*y+ctm[4], ctm[1]*x+ctm[3]*y+ctm[5]];
+    for (let i = 0; i < ol.fnArray.length; i++) {
+      const fn = ol.fnArray[i], a = ol.argsArray[i];
+      if (fn === OPS.save) stack.push(ctm);
+      else if (fn === OPS.restore) ctm = stack.pop() || [1,0,0,1,0,0];
+      else if (fn === OPS.transform) ctm = mul(ctm, a);
+      else if (fn === OPS.constructPath) {
+        const ops = a[0];
+        const args = a[1];
+        if (!ops || !args) continue;
+        let cx = 0, cy = 0, sx = 0, sy = 0, k = 0;
+        for (let j = 0; j < ops.length; j++) {
+          const op = ops[j];
+          if (op === 0) { const p = tp(args[k], args[k+1]); cx = p[0]; cy = p[1]; sx = cx; sy = cy; k += 2; }
+          else if (op === 1 || op === 4) {
+            let nx, ny;
+            if (op === 1) { const p = tp(args[k], args[k+1]); nx = p[0]; ny = p[1]; k += 2; } else { nx = sx; ny = sy; }
+            const y1 = H - cy, y2 = H - ny;
+            if (Math.abs(y1 - y2) < 0.6 && Math.abs(nx - cx) > 5) hs.push({ y: (y1+y2)/2, x0: Math.min(cx, nx), x1: Math.max(cx, nx) });
+            else if (Math.abs(cx - nx) < 0.6 && Math.abs(y1 - y2) > 5) vs.push({ x: (cx+nx)/2, y0: Math.min(y1, y2), y1: Math.max(y1, y2) });
+            cx = nx; cy = ny;
+          }
+          else if (op === 2) { const p = tp(args[k+4], args[k+5]); cx = p[0]; cy = p[1]; k += 6; }
+          else if (op === 3) { const p = tp(args[k+2], args[k+3]); cx = p[0]; cy = p[1]; k += 4; }
+        }
+      }
+    }
+    return { hs, vs };
+  }
+  async function getItems(page, H) {
+    const tc = await page.getTextContent();
+    let rawItems = tc.items.map(i => {
+      const t = i.transform; const rot = Math.abs(t[1]) > Math.abs(t[0]); const diag = !rot && Math.abs(t[1]) > 0.2 * Math.abs(t[0]);
+      return { s: i.str || '', x: t[4], y: H - t[5], rot, diag, w: i.width || 0, fs: Math.hypot(t[0], t[1]) };
+    });
+    // Kararlı ve kesin satır-sütun sıralaması (Y koordinatı kovaları ile)
+    rawItems.sort((a,b) => {
+      const kyA = Math.round(a.y / 2.5), kyB = Math.round(b.y / 2.5);
+      if (kyA !== kyB) return kyA - kyB;
+      return a.x - b.x;
+    });
+    const items = [];
+    for (let j = 0; j < rawItems.length; j++) {
+       const it = rawItems[j];
+       if (/^\s*$/.test(it.s) && it.s.indexOf('*') === -1) continue; 
+       const last = items[items.length - 1];
+       let gw = last ? (last.w || last.fs/2 * last.s.length) : 0;
+       const gap = it.x - (last ? (last.x + gw) : 0);
+
+       const isLastNum = last && /^\d{1,2}$/.test(last.s.trim());
+       const isItNum = /^\d{1,2}$/.test(it.s.trim());
+       const isLastStar = last && /^[\s*xX•·■●+vV]+$/.test(last.s.trim());
+       const isItStar = /^[\s*xX•·■●+vV]+$/.test(it.s.trim());
+       const preventMerge = (isLastNum && isItNum) || isLastStar || isItStar || (last && isItStar) || (isLastStar && !isItStar);
+
+       if (!preventMerge && last && !last.rot && !it.rot && Math.abs(last.y - it.y) < 2.5 && gap > -6 && gap < last.fs * 0.45) {
+           last.s += it.s;
+           last.w = (it.x + it.w) - last.x;
+       } else {
+           items.push(Object.assign({}, it));
+       }
+    }
+    return items.filter(i => i.s.trim());
+  }
+  // birleştirilmiş çizgi koordinatları (x veya y değerleri)
+  function uniq(vals, tol) { vals.sort((a,b)=>a-b); const out=[]; for (let v_idx = 0; v_idx < vals.length; v_idx++) { const v = vals[v_idx]; if (!out.length || v - out[out.length-1] > tol) out.push(v); } return out; }
+  function stars(items) {
+    const out = [];
+    for (let it_idx = 0; it_idx < items.length; it_idx++) { const it = items[it_idx];
+      if (it.diag || !/^[\s*xX•·■●+vV]+$/.test(it.s)) continue;
+      const n = it.s.length;
+      const w = it.w || (it.fs * 0.6 * n);
+      for (let j = 0; j < n; j++) {
+        if (/[*xX•·■●+vV]/.test(it.s[j])) out.push({ x: it.x + (j + 0.5) * w / n, y: it.y });
+      }
+    }
+    return out;
+  }
+  function extractNumberTokens(it) {
+    const tokens = [];
+    const re = /\b\d{1,4}\b/g;
+    let m;
+    const str = it.s;
+    const w = it.w || (it.fs * 0.6 * str.length);
+    while ((m = re.exec(str))) {
+      const num = m[0];
+      let cx;
+      if (it.rot) {
+        cx = it.x;
+      } else {
+        const frac = (m.index + num.length / 2) / Math.max(1, str.length);
+        cx = it.x + frac * w;
+      }
+      tokens.push({ num, cx, y: it.y });
+    }
+    return tokens;
+  }
+  function textLines(items) {
+    const its = items.filter(i => !i.rot).sort((a,b)=>a.y-b.y || a.x-b.x);
+    const lines = [];
+    for (let it_idx = 0; it_idx < its.length; it_idx++) { const it = its[it_idx];
+      const L = lines[lines.length-1];
+      if (L && Math.abs(L.y - it.y) < 5.5) L.items.push(it); else lines.push({ y: it.y, items: [it] });
+    }
+    return lines.map(l => l.items.sort((a,b)=>a.x-b.x).map(i=>i.s).join(' '));
+  }
+  function parseCables(txt) {
+    txt = txt.replace(/\s+/g, ' ').trim();
+    const cables = [];
+    const re = /\(?([^\(\)]+?)\)\s*([0-9]+[.,][0-9]+)\s*([A-Za-zÇĞİÖŞÜçğıöşü\-\/]+)/g;
+    let m;
+    let firstMatchIdx = -1;
+    while ((m = re.exec(txt))) {
+      if (firstMatchIdx === -1) firstMatchIdx = m.index;
+      const conn = m[1].replace(/\s+/g, ' ').trim();
+      let color = m[3].replace(/\s*-\s*/g, '-').replace(/\s+/g, ' ').trim();
+      const parts = conn.split(/-(?=[A-Z])/);
+      cables.push({
+        conn,
+        from: (parts[0] || '').trim(),
+        to: parts.slice(1).join('-').trim(),
+        sec: m[2].replace(',', '.'),
+        color
+      });
+    }
+    const note = firstMatchIdx > 0 ? txt.slice(0, firstMatchIdx).trim() : (cables.length === 0 ? txt : '');
+    return { note, cables };
+  }
+
+  const result = { matrix: null, features: null, drawings: {}, meta: {} };
+  for (let pn = 1; pn <= doc.numPages; pn++) {
+    log(`Sayfa ${pn}/${doc.numPages} okunuyor…`);
+    const page = await doc.getPage(pn);
+    const H = page.view[3];
+    const items = await getItems(page, H);
+    const full = items.map(i => i.s).join(' ');
+    // meta
+    if (!result.meta.docNo) { const m = full.match(/D-\d{6}xx\d{2}\s*\/\s*([A-Z]{1,3})/); if (m) { result.meta.docNo = m[0].replace(/\s+/g,' '); result.meta.rev = m[1]; } }
+    if (!result.meta.title) { const t = items.find(i => APP_CONFIG.titleKeywords.test(i.s)); if (t) result.meta.title = t.s.trim(); }
+    // teknik resim tip başlıkları
+    for (let it_idx = 0; it_idx < items.length; it_idx++) { const it = items[it_idx];
+      const m = it.s.match(/T[İI]P\/TYPE\s*([\-0-9 ]{2,})/);
+      if (m && it.fs > 14) {
+        const sheet = (full.match(/\b(\d+)\/(\d+)\b(?!\.)/) || [])[0] || '';
+        const kind = /COMPONENT SIDE VIEW/.test(full) ? 'Elektrik şeması' : 'Montaj resmi';
+        m[1].split(/[- ]+/).filter(Boolean).forEach(t => { const L = (result.drawings[t] = result.drawings[t] || []); if (!L.some(d => d.page === pn)) L.push({ page: pn, sheet, kind }); });
+      }
+    }
+    const nStars = items.filter(i => !i.rot && /^[\s*xX•·■●+vV]+$/.test(i.s)).length;
+    const refCell = items.find(i => !i.rot && /^REF\.?$/i.test(i.s.trim().replace(/\s/g, '')));
+    const hasMatrix = opts.matrixPage ? pn === opts.matrixPage : (refCell !== undefined || (/CABLE\s*DEFINITION/i.test(full) && nStars > 15) || nStars > 35);
+    const normFull = (full || '').toUpperCase().replace(/İ/g, 'I').replace(/ı/g, 'I');
+    const hasFeat = !result.features && /COMPETITIVE|STANDART|DOZA[GJ]|TURBL|AQUASTOP|AQUATECH|FLOWMET|D[RU]RUM\s*LED|IVME|ACCELERATION|JET/.test(normFull);
+    if (!hasMatrix && !hasFeat) continue;
+
+    // Çizgileri birleştir (Geometrik/Lattice yaklaşımı - O(N) kova gruplaması)
+    function mergeSegments(lines, isHoriz, tol) {
+        tol = tol || 2;
+        const bucket = {};
+        for (let i = 0; i < lines.length; i++) {
+            const l = lines[i];
+            const fixed = isHoriz ? l.y : l.x;
+            const key = Math.round(fixed / tol);
+            (bucket[key] = bucket[key] || []).push(l);
+        }
+        const merged = [];
+        for (const key in bucket) {
+            const list = bucket[key];
+            const fixed = isHoriz ? list[0].y : list[0].x;
+            const segs = list.map(l => isHoriz ? [l.x0, l.x1] : [l.y0, l.y1]);
+            segs.sort((a,b) => a[0] - b[0]);
+            let cur = [...segs[0]];
+            for (let i = 1; i < segs.length; i++) {
+                const s = segs[i];
+                if (s[0] <= cur[1] + tol) {
+                    cur[1] = Math.max(cur[1], s[1]);
+                } else {
+                    merged.push(isHoriz ? { y: fixed, x0: cur[0], x1: cur[1] } : { x: fixed, y0: cur[0], y1: cur[1] });
+                    cur = [...s];
+                }
+            }
+            merged.push(isHoriz ? { y: fixed, x0: cur[0], x1: cur[1] } : { x: fixed, y0: cur[0], y1: cur[1] });
+        }
+        return merged;
+    }
+
+    let mergedVs = [], mergedHs = [];
+    if (hasMatrix && !result.matrix) {
+      log(`Sayfa ${pn}: tablo çizgileri çıkarılıyor…`);
+      try {
+        const { hs, vs } = await getSegments(page, H);
+        mergedVs = mergeSegments(vs, false, 2);
+        mergedHs = mergeSegments(hs, true, 2);
+      } catch (segErr) {
+        console.warn(`Sayfa ${pn} çizgi analizi uyarısı:`, segErr);
+      }
+    }
+
+    // ===== 1. KABLO MATRİS TABLOSU PARSERI =====
+    if (hasMatrix && !result.matrix) { try {
+      let headY = null, ref_x = null;
+      if (refCell) {
+        headY = refCell.y;
+        ref_x = refCell.x;
+      } else {
+        const twoDigits = items.filter(i => !i.rot && /^\d{2}$/.test(i.s.trim()));
+        const byY = {};
+        twoDigits.forEach(i => {
+          const k = Math.round(i.y / 6) * 6;
+          byY[k] = (byY[k] || 0) + 1;
+        });
+        const best = Object.entries(byY).sort((a,b) => b[1] - a[1])[0];
+        if (best && best[1] >= 2) {
+          headY = parseFloat(best[0]);
+          const inRow = twoDigits.filter(i => Math.abs(i.y - headY) < 15);
+          ref_x = Math.max(...inRow.map(i => i.x)) + 25;
+        }
+      }
+      if (!headY || !ref_x) throw new Error(`Sayfa ${pn} içinde 'REF' başlıklı kablo tablosu bulunamadı`);
+
+      const headItems = items.filter(i => !i.rot && Math.abs(i.y - headY) < 25 && i.x < ref_x + 15);
+      const rawTokens = [];
+      for (const it of headItems) {
+        rawTokens.push(...extractNumberTokens(it).filter(t => t.cx < ref_x + 10 && t.num.length <= 2));
+      }
+      
+      rawTokens.sort((a,b) => b.cx - a.cx);
+      const validColsRL = [];
+      let lastX = ref_x;
+      for (const t of rawTokens) {
+        if (!validColsRL.some(u => u.num === t.num && Math.abs(u.cx - t.cx) < 7)) {
+          if (lastX - t.cx > 55) break;
+          validColsRL.push(t);
+          lastX = t.cx;
+        }
+      }
+      if (validColsRL.length < 2) throw new Error(`Sayfa ${pn} içinde tip başlıkları (01, 02 …) bulunamadı`);
+      
+      const uniqTokens = validColsRL.slice().sort((a,b) => a.cx - b.cx);
+      
+      const typeCols = [];
+      for (let k = 0; k < uniqTokens.length; k++) {
+        const cur = uniqTokens[k];
+        let a, b;
+        if (k === 0) {
+          const next = uniqTokens[k+1];
+          const w = next ? (next.cx - cur.cx) : 20;
+          a = cur.cx - w / 2;
+        } else {
+          a = (uniqTokens[k-1].cx + cur.cx) / 2;
+        }
+        if (k === uniqTokens.length - 1) {
+          b = ref_x;
+        } else {
+          b = (cur.cx + uniqTokens[k+1].cx) / 2;
+        }
+        
+        const snapLeft = mergedVs.find(v => Math.abs(v.x - a) < 6 && v.y0 < headY + 20 && v.y1 > headY + 60);
+        if (snapLeft) a = snapLeft.x;
+        const snapRight = mergedVs.find(v => Math.abs(v.x - b) < 6 && v.y0 < headY + 20 && v.y1 > headY + 60);
+        if (snapRight) b = snapRight.x;
+        
+        typeCols.push({ lab: cur.num.padStart(2, '0'), a, b, cx: cur.cx });
+      }
+      
+      const refItems = items.filter(i => !i.rot && Math.abs(i.x - ref_x) < 45 && i.y > headY + 5 && /\d{4}/.test(i.s));
+      refItems.sort((a,b) => a.y - b.y);
+      
+      let hy = [];
+      if (refItems.length > 0) {
+        hy.push(headY + 10);
+        for (let k = 0; k < refItems.length - 1; k++) {
+          hy.push((refItems[k].y + refItems[k+1].y) / 2);
+        }
+        hy.push(refItems[refItems.length - 1].y + 35);
+      } else {
+        const minA = Math.min(...typeCols.map(c => c.a));
+        const rowLines = mergedHs.filter(h => h.x0 < minA + 25 && h.x1 > ref_x + 30);
+        hy = uniq(rowLines.filter(h => h.y > headY + 2).map(h => h.y), 2);
+      }
+      
+      const st = stars(items);
+      const minA = Math.min(...typeCols.map(c => c.a));
+      const rightX = ref_x + 2000;
+      const rows = [];
+      
+      for (let r = 0; r + 1 < hy.length; r++) {
+        const y0 = hy[r], y1 = hy[r+1];
+        const inRow = items.filter(i => i.y > y0 && i.y <= y1);
+        const refTxt = inRow.filter(i => !i.rot && Math.abs(i.x - ref_x) < 45).map(i => i.s).join(' ');
+        const refs = (refTxt.match(/\d{4}/g) || []);
+        if (!refs.length) continue;
+        
+        const types = new Set();
+        st.filter(s => s.y > y0 && s.y <= y1 && s.x >= minA - 5 && s.x < ref_x).forEach(s => {
+          const c = typeCols.find(c => s.x >= c.a && s.x < c.b);
+          if (c) types.add(c.lab);
+        });
+        
+        const txt = textLines(inRow.filter(i => i.x >= ref_x + 25 && i.x < rightX - 5 && !/^[\s*]+$/.test(i.s))).join(' ');
+        const { note, cables } = parseCables(txt);
+        rows.push({ refs, note, cables, types: Array.from(types) });
+      }
+      if (rows.length) {
+        const allTypeLabs = Array.from(new Set(typeCols.map(c => c.lab))).sort((a,b) => (+a)-(+b));
+        result.matrix = { page: pn, numPages: doc.numPages, types: allTypeLabs, rows };
+      }
+    } catch (e) { 
+      if (setStatus) setStatus(`Tablo okuma hatası (Sayfa ${pn}): ${e.message}`, true);
+      console.error(e); 
+      if (opts.matrixPage) throw e; 
+    } }
+
+    // ===== 2. ÖZELLİK VE OPSİYON TABLOSU PARSERI =====
+    if (hasFeat && !result.features) { try {
+      const normStr = s => (s || '').toUpperCase().replace(/İ/g, 'I').replace(/ı/g, 'I');
+      const KNOWN_FEAT_RE = /IVME|ACCELERATION|STANDART|COMPETITIVE|AQUATECH|D[RU]RUM\s*LED|TURBL|AQUASTOP|MIKRO\s*FIBER|FLOWMET|JET|DOZA[GJ]/;
+      const st = stars(items);
+      
+      // 1. Özellik tablosundaki etiketleri bul (X koordinatına göre dikey kolon kümelemesi ile)
+      const candidateLabels = items.filter(i => !i.rot && KNOWN_FEAT_RE.test(normStr(i.s)));
+      const clusters = [];
+      candidateLabels.forEach(c => {
+        if (!st.some(s => s.x < c.x && Math.abs(s.y - c.y) < 25)) return;
+        let g = clusters.find(cl => Math.abs(cl.x - c.x) < 40);
+        if (!g) { g = { x: c.x, items: [] }; clusters.push(g); }
+        g.items.push(c);
+        g.x = g.items.reduce((sum, it) => sum + it.x, 0) / g.items.length;
+      });
+      clusters.sort((a, b) => b.items.length - a.items.length);
+      
+      let tableLabels = (clusters.length && clusters[0].items.length >= 2) ? clusters[0].items : [];
+      if (!tableLabels.length) {
+        const fallbackClusters = [];
+        candidateLabels.forEach(c => {
+          let g = fallbackClusters.find(cl => Math.abs(cl.x - c.x) < 40);
+          if (!g) { g = { x: c.x, items: [] }; fallbackClusters.push(g); }
+          g.items.push(c);
+          g.x = g.items.reduce((sum, it) => sum + it.x, 0) / g.items.length;
+        });
+        fallbackClusters.sort((a, b) => b.items.length - a.items.length);
+        if (fallbackClusters.length && fallbackClusters[0].items.length >= 2) {
+          tableLabels = fallbackClusters[0].items;
+        }
+      }
+      if (!tableLabels.length) throw new Error("Özellik satır etiketleri bulunamadı");
+      
+      const fx = Math.min(...tableLabels.map(f => f.x));
+      const minLabelY = Math.min(...tableLabels.map(f => f.y));
+      const maxLabelY = Math.max(...tableLabels.map(f => f.y));
+      
+      // 2. Tablodaki Tip Numaraları satırını bul (Token çıkarma ve Y kova analizi ile)
+      const candNums = items.filter(i => !i.rot && i.x < fx && i.x > fx - 950 && 
+        (Math.abs(i.y - (maxLabelY + 15)) < 40 || Math.abs(i.y - (minLabelY - 15)) < 40 || Math.abs(i.y - maxLabelY) < 70 || Math.abs(i.y - minLabelY) < 70)
+      );
+      
+      const numToks = [];
+      candNums.forEach(it => {
+        const toks = extractNumberTokens(it);
+        toks.forEach(t => {
+          if (t.num.length <= 2) {
+            numToks.push({ num: t.num.padStart(2, '0'), cx: t.cx, y: t.y });
+          }
+        });
+      });
+      
+      const byY = {};
+      numToks.forEach(t => {
+        const k = Math.round(t.y / 5) * 5;
+        byY[k] = (byY[k] || 0) + 1;
+      });
+      const bestYEntries = Object.entries(byY).sort((a,b) => b[1] - a[1]);
+      const bestY = bestYEntries.length ? parseFloat(bestYEntries[0][0]) : (maxLabelY + 15);
+      
+      const rowToks = numToks.filter(t => Math.abs(t.y - bestY) < 15);
+      rowToks.sort((a,b) => b.cx - a.cx);
+      
+      const validColsRL = [];
+      let lastX = fx;
+      for (const t of rowToks) {
+        if (!validColsRL.some(u => u.num === t.num && Math.abs(u.cx - t.cx) < 7)) {
+          if (lastX - t.cx > 55) break;
+          validColsRL.push(t);
+          lastX = t.cx;
+        }
+      }
+      if (validColsRL.length < 2) throw new Error("Özellik tablosu sütunları ayrıştırılamadı");
+      
+      const uniqCols = validColsRL.slice().sort((a,b) => a.cx - b.cx);
+      
+      const cols = [];
+      for (let k = 0; k < uniqCols.length; k++) {
+        const cur = uniqCols[k];
+        let a, b;
+        if (k === 0) {
+          const next = uniqCols[k+1];
+          const w = next ? (next.cx - cur.cx) : 15;
+          a = cur.cx - w / 2;
+        } else {
+          a = (uniqCols[k-1].cx + cur.cx) / 2;
+        }
+        if (k === uniqCols.length - 1) {
+          b = fx;
+        } else {
+          b = (cur.cx + uniqCols[k+1].cx) / 2;
+        }
+        cols.push({ type: cur.num, a, b, cx: cur.cx, desc: "" });
+      }
+      
+      // 3. Her sütun için Hacim Açıklamasını (P-kodu: TEK_P54, P54_IPTAL, P50 vb.) bul
+      const P_REGEX = /P\d+/i;
+      const minColA = Math.min(...cols.map(c => c.a));
+      const pItems = items.filter(i => !i.rot && i.x >= minColA - 15 && i.x <= fx + 15 && P_REGEX.test(i.s) && i.y > maxLabelY);
+      
+      const fColsDescOrder = cols.slice().sort((a,b) => b.cx - a.cx);
+      const pItemsDescOrder = pItems.slice().sort((a,b) => b.x - a.x);
+      
+      if (pItemsDescOrder.length >= fColsDescOrder.length) {
+        for (let k = 0; k < fColsDescOrder.length; k++) {
+          fColsDescOrder[k].desc = pItemsDescOrder[k].s.trim().toUpperCase();
+        }
+      } else {
+        cols.forEach(c => {
+          const matching = pItems.filter(p => Math.abs(p.x - c.cx) < 14 || Math.abs((p.x + (p.w||0)/2) - c.cx) < 16);
+          if (matching.length) {
+            matching.sort((a,b) => Math.abs(a.x - c.cx) - Math.abs(b.x - c.cx));
+            c.desc = matching[0].s.trim().toUpperCase();
+          } else {
+            const headerTexts = items.filter(i => i.x >= c.a && i.x < c.b && i.y > maxLabelY + 15 && i.y < maxLabelY + 250 && /[A-Z0-9]/i.test(i.s) && !/^\d{1,2}$/.test(i.s.trim()) && !/^[\s*]+$/.test(i.s));
+            if (headerTexts.length) {
+              headerTexts.sort((a, b) => b.y - a.y);
+              c.desc = headerTexts.map(i => i.s.trim()).filter(Boolean).join('_').toUpperCase();
+            }
+          }
+        });
+      }
+      
+      // 4. Özellik satırlarını ve etiketlerini tespit et (yalnızca özellik tablosu Y sınırları içinde!)
+      const labelColumnItems = items.filter(i => !i.rot && i.x >= fx - 10 && i.x <= fx + 350 && i.y >= minLabelY - 10 && i.y <= maxLabelY + 10 && !/^[\s*]+$/.test(i.s));
+      const rawRowYs = Array.from(new Set(labelColumnItems.map(f => Math.round(f.y * 10) / 10))).sort((a,b)=>a-b);
+      const rowYs = [];
+      for (let y_idx = 0; y_idx < rawRowYs.length; y_idx++) {
+        const y = rawRowYs[y_idx];
+        if (!rowYs.length || y - rowYs[rowYs.length - 1] > 8) rowYs.push(y);
+      }
+      const fhy = [];
+      if (rowYs.length > 0) {
+        fhy.push(rowYs[0] - 8);
+        for (let k = 0; k < rowYs.length - 1; k++) fhy.push((rowYs[k] + rowYs[k+1]) / 2);
+        fhy.push(rowYs[rowYs.length - 1] + 10);
+      }
+      
+      const feats = [];
+      for (let k = 0; k < fhy.length - 1; k++) {
+        const y0 = fhy[k], y1 = fhy[k+1];
+        const rowLabels = labelColumnItems.filter(i => i.y > y0 && i.y <= y1);
+        rowLabels.sort((a,b) => a.x - b.x);
+        let lbl = rowLabels.map(i => i.s.trim()).join(' ').replace(/\s+/g, ' ').trim();
+        if (!lbl || lbl.length < 2) continue;
+        
+        const ts = new Set();
+        st.filter(s => s.y > y0 - 3 && s.y <= y1 + 3 && s.x < fx).forEach(s => {
+          const col = cols.find(c => s.x >= c.a - 2 && s.x < c.b + 2);
+          if (col && col.type) ts.add(col.type);
+        });
+        
+        feats.push({ name: lbl, types: Array.from(ts) });
+      }
+      if (!feats.length) throw new Error("Özellik satırları boş kaldı");
+      
+      // 5. types objesini oluştur
+      const types = {};
+      cols.forEach(c => {
+        types[c.type] = {
+          desc: c.desc || "",
+          features: feats.filter(f => f.types.includes(c.type)).map(f => f.name)
+        };
+      });
+      result.features = { page: pn, names: feats.map(f => f.name), types };
+    } catch (e) { log('Tip açıklama tablosu okunamadı: ' + e.message); console.error(e); } }
+  }
+  return result;
+}
+</script>
+<script>
+const PDF_FONTS = {"R": {"b64": "AAEAAAAPAIAAAwBwR0RFRgFvAbUAAFL8AAAAKEdQT1NEdkx1AABTJAAAACBHU1VCJ6Q/wwAAU0QAAACWTUFUSIIj3JkAAFPcAAACoE9TLzLqbxW4AAApJAAAAFZjbWFwnMuIxQAAKXwAAADsZ2FzcAAHAAcAAFLwAAAADGdseWY6WLonAAAA/AAAJARoZWFkJttMTwAAJlwAAAA2aGhlYQ0BBxgAACkAAAAAJGhtdHiLlVQrAAAmlAAAAmpsb2NhEkMJvQAAJSAAAAE6bWF4cADcA8EAACUAAAAAIG5hbWXSM6kqAAAqaAAAKGhwb3N0/9sAWgAAUtAAAAAgAAIAW/6WA/YFpAADAAcAABMRIRElIREhXAOZ/M4CzP00/pYHDvjycgYpAAIBFgAAAc0F1QADAAkAACUzFSMRMxEDIwMBFre3txKSE/7+BdX9cf6bAWUAAgCxA6oCnwXVAAMABwAAAREjESERIxEBSpkB7ZgF1f3VAiv91QIrAAIAjgAABXwFvgADAB8AAAEhAyELASETMwMhFSEDIRUhAyMTIQMjEyE1IRMhNSETA67++ksBBz1dAQZfkF0BGf7ESgEf/r5dkFz++V2RXv7kAT1M/t4BRVwDhf6yA4f+YQGf/mGa/rKZ/mIBnv5iAZ6ZAU6aAZ8AAAMAmf7TA/wGFAAhACgALwAAASMDLgEnNR4BFxEuATU0Njc1MxUeARcVLgEnER4BFRQGBwMRDgEVFBYXET4BNTQmAm9aAV+9X1y8ZMe1xLhaU51LS51TzMHNwFppbWXLcnRv/tMBLQItLbRAQQEByCSslqO8DuvoBB8bryouBP5VI7ScqcMPAwABmg1qWFZg1f5PEW5aWGgABQBl/+MGcgXwAAsAFwAjACcAMwAAASIGFRQWMzI2NTQmJzIWFRQGIyImNTQ2ASIGFRQWMzI2NTQmJTMBIxMyFhUUBiMiJjU0NgU8TllZTk1ZWU2OqKmNkKeo/O5NWVhOT1laAt+Q/LeQHI+pqY+PpqcCkZSEgpWVgoOVf9y7u9vbu7zbAmGVgoSUlISBln/58wYN27u92tu8utwAAgB0/+MFZQXwAAkAMAAAAQ4BFRQWMzI2NwkBPgE3MwYCBxMjJw4BIyIANTQ2Ny4BNTQ2MzIWFxUuASMiBhUUFgHAUky/kFWWQf6iAck1PAWoC15T++OBXc522P7seXgrLcilS5VMTo4+XnY1AyNRoViSwj9AAo/9+FnLcoT+/n7+45NZVwET14DhYz99PKLFJCS2LzFvWDNnAAEAsQOqAUsF1QADAAABESMRAUqZBdX91QIrAAABAJ7+8gI8BhIADQAAAQYCFRQSFyMmAjU0EjcCPHl1dniQiIaGiAYS5v4+5+f+O+XrAcbg3wHE7AAAAQCT/vICMQYSAA0AABMzFhIVFAIHIzYSNTQClJCHhoaHkHd2dgYS7P483+D+OuvlAcXn5wHCAAABADYCSgNjBfAAEQAAAQ0BByURIxEFJy0BNwURMxElA2P+vQFDNf7SZv7RNAFD/r00AS9mAS4E38LDYsv+hwF5y2LDwmPLAXn+h8sAAQDDAAAFRgUEAAsAAAERIRUhESMRITUhEQNQAfX+C5f+CgH2BQT906r90wItqgItAAABAI7/EgGWAP4ABQAANzMVAyMT2L6UdEr+rP7AAUAAAAEAWgHfAkACgwADAAATIRUhWgHl/hsCg6QAAQDFAAABgwD+AAMAADczFSPFvr7+/gAAAQAA/0ICbQXVAAMAAAEzASMB1Jn+LJkF1fltAAIAef/jBBsF8AALABcAAAEiAhEQEjMyEhEQAicyEhEQAiMiAhEQEgJKjI6OjI2NjY3i7u7i4u7uBVD+zf7M/s3+zQEzATMBNAEzoP5z/ob+h/5zAY0BeQF6AY0AAQDKAAAD6wXVAAoAADchEQU1JTMRIRUh5QEp/rwBQrYBKfz6qgRzSLhI+tWqAAEAhwAAA90F8AAcAAAlIRUhNTYANz4BNTQmIyIGBzU+ATMyFhUUBgcGAgFiAnr8q2cBZi5XRZZ5Vb5sbr9P0fg+UhfxqqqqdwGROm2XSXeWQkPMMTLowlylcB3+6wABAIz/4wQCBfAAKAAAAR4BFRQEIyImJzUeATMyNjU0JisBNTMyNjU0JiMiBgc1PgEzMhYVFAYC7IKT/u/8VbNgTLRiq7OmlZyjho+TiUuqZ2e1UM/ygAMlH8SQ3fIlJcMxMpaPhJWmd3BzeyQmtCAg0bJ8qwAAAgBaAAAELgXVAAIADQAACQEhAzMRMxUjESMRITUCuf41Acsw5b+/tf2hBSX84wPN/DOo/qABYMMAAAEAjv/jA/QF1QAdAAATIRUhET4BMzIAFRQAIyImJzUeATMyNjU0JiMiBgfHAsr93ChPKOEBB/7y9lWvXlGtYJy2tpxJkUsF1ar+kg8P/u7q8f71ICDLMTC2nJy2JCYAAAIAgP/jBCEF8AALACQAAAEiBhUUFjMyNjU0JhMVLgEjIgIDPgEzMhIVFAIjIgIREAAhMhYCYHqPj3p7j4/uRIxEtL4NNaBgy+v1zOn2AS4A/0SMAzu6oqG7u6GiugJ5uCQm/vL+71dd/u/r5v7qAY0BeQFiAaUeAAEAlwAAA/gF1QAGAAATIRUBIwEhlwNg/hi9Acr9ewXVVvqBBSsAAwB9/+MEFwXwAAsAIwAvAAABIgYVFBYzMjY1NCYlLgE1NDYzMhYVFAYHHgEVFAYjIiY1NDYTFBYzMjY1NCYjIgYCSoKUlIKClZX+yHWC5cjJ5IJ0g5Pv3t7vlEGCdnWEhHV2ggLFmoeHmpuGh5pWILKAs9DQs4CyICLGj9no6NmPxgFhdIKCdHSCggACAHT/4wQUBfAAGAAkAAA3NR4BMzISEw4BIyICNTQSMzISERAAIyImATI2NTQmIyIGFRQWykWMRLS+DTSgYcrr9cvp9v7T/0WMAR57j497eo+PH7gkJgENARJWXAEP6+YBFv5z/ob+n/5bHgKXuqKhu7uhoroAAgDYAAABlgQjAAMABwAANzMVIxEzFSPYvr6+vv7+BCP+AAIAjv8SAZYEIwADAAkAABMzFSMRMxUDIxPYvr6+lHRKBCP+/dms/sABQAAAAQDDAF4FRgSmAAYAAAkCFQE1AQVF/F8Doft+BIID8P6R/pO2AdGmAdEAAgDDAWAFRgOiAAMABwAAEyEVIRUhFSHDBIL7fgSC+34DoqjwqgABAMMAXgVGBKYABgAAEzUBFQE1AcMEgvt+A58D8Lb+L6b+L7YBbQAAAgCEAAADUgXwAAMAJAAAJTMVIxMjNTQ2PwE+ATU0JiMiBgc1PgEzMhYVFAYPAQ4BBw4BFQFgt7exrDNRUTMudmFHoVhVrlymyUFRTysjBwUG/v4BkZplglZZNV4xWW5GQ7w5OMKfTIlWVi81GRU8NAAAAgB5/pwGswWiAAsATAAAARQWMzI2NTQmIyIGAQ4BIyImNTQ2MzIWFzUzET4BNTQmJyYkIyIGBwYCFRQSFx4BMzI2NxcGBCMiJCcmAjU0Ejc2JDMyBBceARUQAAcCroBvb3+Cbm2AAeo2i12bwcKaXYw1gYOVOTle/vOeb8xWjaBoYl75jXTgXlFx/veJpv7Yc3N4enF0ATGqvgFHb0NH/uL8AhmPo6SOjKWk/khNSfnIyPpLTIP9IBbfsWu8UIOLQUBm/rXBn/7qamhtV1FvYWeDfX0BSb22AUp9f4euoGLme/75/tAGAAIADgAABN4F1QACAAoAAAEDIQEzASMDIQMjAnb3Ae/+oc8CAL17/aJ6wAUO/RkDrvorAX/+gQAAAwC0AAAEbgXVAAgAEQAgAAABESEyNjU0JiMBESEyNjU0JiMlITIWFRQGBx4BFRQGIyEBawEjk42Nk/7dAQ2Fg4OF/j0B0NDhc3CHlPXi/h4Cyf3dh4uMhQJm/j5vcnFwpsCxiaIUIMuYyNoAAQBn/+MEpAXwABkAAAEVLgEjIgIREBIzMjY3FQ4BIyAAERAAITIWBKNc0HXm9fXmddBcX9Z2/s7+ogFeATJ41gVi1V9e/sf+2P7Z/sdeX9NISAGfAWcBaAGfRwACALQAAAUfBdUACAARAAABETMgABEQACElISAAERAAKQEBa9sBFgED/v3+6v5vAXUBhwFt/pH+e/6LBS/7dwEYAS4BLAEXpv6X/oD+fv6WAAEAtAAABBcF1QALAAATIRUhESEVIREhFSG1A1H9ZQKA/YACrPyeBdWq/kaq/eOqAAEAtAAAA7oF1QAJAAATIRUhESEVIREjtQME/bICFf3rtgXVqv5Iqv03AAEAZ//jBP4F8AAdAAAlESE1IREOASMgABEQACEyFhcVLgEjIgIREBIzMjYESf7XAd1p/pD+xf6dAWMBO4PtZGXjffb4+PZhl9UBkab9f1NVAZkBbQFuAZlIRtdfYP7O/tH+0v7OJQAAAQC0AAAEtgXVAAsAABMzESERMxEjESERI7W2ApS2tv1stgXV/ZwCZPorAsf9OQAAAQC0AAABawXVAAMAABMzESO1trYF1forAAAB/6D+ZgFrBdUACwAAEzMREAYrATUzMjY1tba5zEU4eWMF1fqT/vL0qpbCAAEAtAAABOAF1QAKAAATMxEBMwkBIwERI7W2Alvq/WUCyu/9e7YF1f2JAnf9SPzjAs/9MQABALQAAAP5BdUABQAAEzMRIRUhtbYCjvy8BdX61aoAAAEAtAAABYMF1QAMAAATIQkBIREjEQEjAREjtQEPAVcBWAEPsf6ltv6lsAXV/AgD+PorBR/8AAQA+uEAAAEAtAAABK4F1QAJAAATMwERMxEjAREjtfUCVLD1/aywBdX7HwTh+isE4fsfAAACAGf/4wVEBfAACwAXAAABIgIREBIzMhIREAInIAAREAAhIAAREAAC1sbp6cbG6OjGARsBUv6u/uX+5f6tAVMFTP64/uX+5v64AUgBGgEbAUik/lv+nv6f/lsBpAFiAWIBpQAAAgC0AAAEGQXVAAgAEwAAAREzMjY1NCYjJSEyFhUUBisBESMBa+R/i4t//mYBmuLn5+LktgUv/c+Sh4aSpuPb3eL9qAACAGf++AVEBfAACwAdAAABIgIREBIzMhIREAIbASMnDgEjIAAREAAhIAAREAIC1sbp6cbG6Og579vHHh8P/uX+rQFTARsBGwFSvAVM/rj+5f7m/rgBSAEaARsBSPrP/t3vAgIBpQFhAWIBpf5b/p7+/P6OAAIAtAAABMwF1QATABwAAAEeARcTIwMuASsBESMRITIWFRQGAREzMjY1NCYjAzI7bji5xKxCfWzGtgGa5+J1/cjkhIaGhAK8FpB+/mgBf5Zi/YkF1dbYjboCT/3uh4ODhQAAAQB5/+MELAXwACcAAAEVLgEjIgYVFBYfAR4BFRQEIyImJzUeATMyNjU0Ji8BLgE1NDYzMhYD2me4VZWha5ZtzMH++/1g13Nv1GebqnqLbsy1+9xfxAWkxTc2gHZjZR8ZK9m22eAwL9BFRoh+bnwfGC3Aq8bkJgAAAf/6AAAEbAXVAAcAAAMhFSERIxEhBQRw/iO2/iMF1ar61QUrAAABAKD/4wSlBdUAEQAAEzMRFBYzMjY1ETMREAAjIgARoLedr6+ct/78/v/+/AXV/HXw09PwA4v8XP7c/tYBKgEkAAABAA4AAATeBdUABgAAIQEzCQEzAQIP/f++AaoBq73+AAXV+xcE6forAAABAD0AAAbjBdUADAAAEzMJATMJATMBIwkBIz24ARoBGswBGwEauP6v5f7l/uHkBdX7EgTu+xIE7vorBRD68AAAAQA2AAAEtgXVAAsAABMzCQEzCQEjCQEjAXTDAU4BUMP+UAHNw/6G/oPEAeAF1f3VAiv9M/z4Anv9hQMdAAAB//wAAARqBdUACAAAAzMJATMBESMRBMQBdAFyxP4ktgXV/ZoCZvzy/TkCxwAAAQBSAAAEnAXVAAkAABMhFQEhFSE1ASFoBB/8rwNm+7cDUfzEBdWa+2+qmgSRAAEAnv7yAhwGFAAHAAATIRUjETMVIZ4BftjY/oIGFI/5/I8AAAEAAP9CAm0F1QADAAATASMBmQHUmf4sBdX5bQaTAAEAs/7yAjEGFAAHAAABESE1MxEjNQIx/oLX1wYU+N6PBgSPAAEAwwOoBUYF1QAGAAAJASMJASMBA1wB6bX+dP50tQHpBdX90wGL/nUCLQAAAf/u/h0DrP6sAAMAAAEVITUDrPxC/qyPjwABAJkE8AJJBmYAAwAAARMjAQFK/or+2wZm/ooBdgACAG7/4wPDBHsACgAlAAABIgYVFBYzMjY9ATcRIzUOASMiJjU0NjsBNTQmIyIGBzU+ATMyFgJ4yZt0ZIqmpqY4qXubtuPi6JaIVqRMW6tR29gCM2Z7YnPZtClM/YGqZmHBor3AEn+LLi6qJyf8AAIAp//jBC4GFAALABwAAAE0JiMiBhUUFjMyNgE+ATMyEhEQAiMiJicVIxEzA4GWg4SWloSDlv3NNJ9vuOXluG+fNKenAi/L5+fLy+fnAlJkYf68/vj++P68YWSoBhQAAAEAZf/jA4QEewAZAAABFS4BIyIGFRQWMzI2NxUOASMiABEQADMyFgODRo1IorKyokiNRkWVU+T+9AEP602SBDWsKyvjzc3jKyuqJCQBPgEOARIBOiMAAgBl/+MD6wYUABAAHAAAAREzESM1DgEjIgIREBIzMhYBFBYzMjY1NCYjIgYDRaamNJ9wt+Xlt3Cf/gCWg4SXl4SDlgO2Al757KhkYQFEAQgBCAFEYf4Vy+fny8vn5wAAAgBl/+MEDAR7ABQAGwAAARUhHgEzMjY3FQ4BIyIAERAAMzISBy4BIyIGBwQM/QYLuaRgs1hZu2Dy/ucBC+PL7aYClHqLpwwCXlq+xzQ0riosATgBCgETAUP+3cSXtK6eAAABACoAAAKsBhQAEwAAARUjIgYdASEVIREjESM1MzU0NjMCrJ5aRQER/u+mn5+cqgYUmVBoY4/8LwPRj067qwAAAgBl/lYD6wR7AAsAKAAAATQmIyIGFRQWMzI2FxACIyImJzUeATMyNj0BDgEjIgIREBIzMhYXNTMDRZWGhZSUhYaVpuXsV5tJSY5Ko6IzoHC64uK6cKAzpgI9yNzcyMfc3Ov+4v7pHR6zLCq9v1tjYgE6AQMBBAE6YmOqAAEApwAAA/QGFAATAAABESMRNCYjIgYVESMRMxE+ATMyFgP0pnBvhpunpzuhaq2zAqT9XAKen56+pP2HBhT9nmVk7wAAAgCtAAABVAYUAAMABwAAEzMRIxEzFSOupaWlpQRg+6AGFOkAAv/e/lYBVAYUAAsADwAAEzMRFAYrATUzMjY1ETMVI66lkqM/LF5FpaUEYPuM1sCcYZkGKOkAAQCnAAAEJgYUAAoAABMzEQEzCQEjAREjp6cB7tT96QIt2P4ApwYU/GkB4/30/awCI/3dAAEArQAAAVQGFAADAAATMxEjrqWlBhT57AAAAQCnAAAGZwR7ACIAAAE+ATMyFhURIxE0JiMiBhURIxE0JiMiBhURIxEzFT4BMzIWA74/rHWeq6dmaoCWpmdrf5WnpzmebW6aA4l8dvXi/VwCnqGcvqT9hwKeopu/o/2HBGCuZ2J8AAABAKcAAAP0BHsAEwAAAREjETQmIyIGFREjETMVPgEzMhYD9KZwb4abp6c7oWqtswKk/VwCnp+evqT9hwRgrmVk7wACAGX/4wQDBHsACwAXAAABIgYVFBYzMjY1NCYnMhIREAIjIgIREBICNIWbmoaFmpqF2Pf32Nn19QPf58nJ5+jIx+mc/sj+7P7t/scBOQETARQBOAACAKf+VgQuBHsAEAAcAAAlESMRMxU+ATMyEhEQAiMiJgE0JiMiBhUUFjMyNgFOp6c0n2+45eW4b58B/5aDhJaWhIOWqP2uBgqqZGH+vP74/vj+vGEB68vn58vL5+cAAgBl/lYD6wR7AAsAHAAAARQWMzI2NTQmIyIGAQ4BIyICERASMzIWFzUzESMBEZaDhJeXhIOWAjQ0n3C35eW3cJ80pqYCL8vn58vL5+f9rmRhAUQBCAEIAURhZKr59gAAAQCnAAAC9gR7ABEAAAEuASMiBhURIxEzFT4BMzIWFwL2HEInjZanpzSodxEqGQO0EhHLvv2yBGCuZmMFBQABAGP/4wNnBHsAJwAAARUuASMiBhUUFh8BHgEVFAYjIiYnNR4BMzI2NTQmLwEuATU0NjMyFgMwRpdRe3xZhTixlN7CUbBhXLJXdX5bmjmaicq5XKIEP64oKFRUQEkhDiqZiZy2IyO+NTVZUUtQJQ8klYKerB4AAQAxAAACpwWeABMAAAERIRUhERQWOwEVIyImNREjNTMRAVIBVf6rQ2erq7+SeXkFnv7Cj/2giU6an9ICYI8BPgAAAgCc/+MD6QR7ABMAFAAAExEzERQWMzI2NREzESM1DgEjIiYBnaVwb4ebpqY8n2qttAGgAboCpv1hn5++pAJ7+6CsZmPwA6gAAQA2AAAEDARgAAYAABMzCQEzASM3rwE7ATuw/obhBGD8VAOs+6AAAAEATQAABZcEYAAMAAATMxsBMxsBMwEjCwEjTabPzsPPzqb++MPZ2sMEYPyWA2r8lgNq+6ADlvxqAAABADUAAAQHBGAACwAACQIjCQEjCQEzCQED9P6TAX/D/tv+2sMBiP6ZxAELAQsEYP3f/cEBuP5IAkoCFv5xAY8AAQA2/lYEDARgAA8AAAUOASsBNTMyNj8BATMJATMCUUaFcIRhREwuHv5orwE7ATuwaMh6mkiGVARO/JQDbAABAE8AAAN5BGAACQAAEyEVASEVITUBIWYDEv2SAm781wJv/agEYKj825OoAyUAAQDm/rIDrwYUACQAAAUVIyImPQE0JisBNTMyNj0BNDY7ARUjIgYdARQGBx4BHQEUFjMDrjjgmGGANzeBYJjgOD1/TVJjZFFNf76QlN3vl3SPc5Xw3ZOPWI34nY4ZG46c+I1YAAEA6v4dAYMGHQADAAABESMRAYOZBh34AAgAAAABAOb+sgOvBhQAJAAAFzMyNj0BNDY3LgE9ATQmKwE1MzIWHQEUFjsBFSMiBh0BFAYrAeY/fk1RZGRRTX4/OeCXYX84OH9hl+A5vlaP+JyOGxmOnfiOV4+T3fCVc490l+/dlAAAAQDDAdMFRgMxAB0AAAEVDgEjIicmJyYnJiMiBgc1PgEzMhcWFxYXFjMyNgVFXqFYY4MKBQYNjFRQmllfoVdjhQgFBw2LVU2YAzGyT0Q7BAIDBT5NU7JPRTwEAgMFPkwAAgDBBUYC2QYQAAMABwAAATMVIyUzFSMCIbe3/qG2tgYQysrKAAABAFQCnAJvBfAAGAAAEyEVITU2NwA1NCYjIgYHNT4BMzIWFRQBBvEBfv3mHjkBNl5NLm5BRXgzg5z+1zMDDnJuHzgBMV5CUSMjexwchGyL/uQwAAABAMUCSAGDA0YAAwAAEzMVI8W+vgNG/gABAQX+dQJ7AAAAEwAAIR4BFRQGIyImJzUeATMyNjU0JicCGDIwbGopTiceQyo1NiYpPmkwWVsMDIMRDzAuHlc9AP//AA4AAATeB20SJgAiAAAQBwCZBEMBdf//AGf+dQSkBfASJgAkAAAQBwBjAQ8AAP////4AAAIkB20SJgAqAAAQBwCZAt4Bdf//AGf/4wVEB04SJgAwAAAQBwCYBKMBdQABAPwAPwUNBMUACwAACQIHCQEnCQE3CQEFDP5lAZtr/mP+Y2oBmv5magGdAZ0ETP41/jd5Acv+NXkByQHLef41AcsA//8AoP/jBKUHbRImADYAABAHAJkEcAF1//8AoP/jBKUHThImADYAABAHAJgEcAF1//8Abv/jA8MGZhImAEIAABAGAHdKAP//AGX+dQOEBHsSJgBEAAAQBwBjAIEAAP///+EAAAIgBmYSJgB0AAAQBwB3/zQAAP//AGX/4wQDBhASJgBQAAAQBgBgaAD//wCc/+MD6QZmEiYAVgAAEAYAd28A//8AnP/jA+kGEBImAFYAABAGAGBvAP//AGf/4wT+B20SJgAoAAAQBwCaBJgBdf//AGX+VgPrBkgSJgBIAAAQBgB4fQD//wC0AAABbQdQEiYAKgAAEAcAmwLeAXUAAgCtAAABVAR7AAMABAAAEzMRIxOupaVSBGD7oAR7AP//AHn+dQQsBfASJgA0AAAQBgBjfQD//wBj/nUDZwR7EiYAVAAAEAYAYxUAAAEArQTuAuwGZgAGAAABMxMjJwcjAYqF3X2ion0GZv6I9fUAAAEAswUpAucGSAANAAATMx4BMzI2NzMOASMiJrNqCldPTVcLagiPgoOOBkhLS0pMj5CQAAABAFoB6QNAAnkAAwAAEyEVIVoC5v0aAnmQAAEAWgHpBtoCeQADAAATIRUhWgZ/+YECeZAAAQCcA+kBpQXVAAUAAAEjNRMzAwFavZN0SgPprQE//sEAAAEAoAP+AagF1QAFAAATMxUDIxPqvpR0SgXVmP7BAT8AAgCcA+kDFgXVAAUACwAAASM1EzMDBSM1EzMDAVq9k3RKAXK+k3RJA+mtAT/+wa2tAT/+wQAAAgCcA+kDFgXVAAUACwAAEzMVAyMTJTMVAyMT5r6TdEkBcb6TdEkF1az+wAFArKz+wAFAAAEBFAHRAysEIQALAAABNDYzMhYVFAYjIiYBFJxxcJqbcHGbAvp8q6t8faysAAADANQAAAZfAP4AAwAHAAsAACUzFSMlMxUjJTMVIwM6v78CZcDA+zXAwP7+/v7+/gABAGkAzAWvBDgACQAAARUBJzchNSEnNwWu/p9s0fu3BEnRbAKvWv53eOmq6XgAAgDDARAFRgP0AB0AOwAAARUOASMiJyYnJicmIyIGBzU+ATMyFxYXFhcWMzI2ExUOASMiJyYnJicmIyIGBzU+ATMyFxYXFhcWMzI2BUVeoVhjgwkHBQ2MVFCaWV+hV2OFCQUFDotVTZhdXqFYY4MJBwUNjFRQmllfoVdjhQgFBg6LVU2YAm+zTkU7BAMCBj1MVLNORTsFAgIGPUsB2rJPRTsEAwIGPUxTsk5FOwQCAwY9SwAAAQCe/fwC/AeSAAsAAAEjNRATEhMzAgMCEQFOsJColZDqUXL9/OoDlwHiAjABA/3z/ob97vztAAABAJ79/AFOB4kAAwAAEzMRI56wsAeJ9nMAAAEAnv4UAvwHiQALAAABFRATEhMjAgMCETUBTnKEt5C7gpAHier8pf5X/hT+ZQFFAe4CJgMy6gAAAQCe/fwC/AeSAAsAAAE1EAMCAzMSExIRFQJMc1HqkJankP386gMTAhIBeQIO/v390P4e/GnqAAABAkv9/AL8B4kABAAAAREjETAC+68HifZzCY0AAQCe/hQC/AeJAAsAAAEzFRADAgMjEhMSEQJMr5CBvJC3hHMHier8zf3b/hL+uwGbAewBqQNbAAABAJ79/AL8B20ABQAAASMRIRUhAU6wAl3+U/38CXHDAAEAnv38AU4HiQADAAATMxEjnrCwB4n2cwAAAQCe/hQC/AeJAAUAAAERIRUhEQFOAa39oweJ907DCXUAAAEAnv38AvwHbQAFAAABESE1IRECTP5SAl39/Aiuw/aPAAABAkv9/AL8B3oAAwAAATMRIwJMr68HevaCAAEAnv4UAvwHegAFAAABMxEhNSECTK/9owGuB3r2msMAAQJf/eoE0AdtAA0AAAEjETQ3NjsBFSMiBwYVAwenY22o9/1bPTP96gd135GesGZXmQABAJf9/AMHB4YAGAAAARYXFhkBIxEQJyYvATUzMjc2GQEzERAHBgJSNCZbp2RD6zc36UVkp1skAsEgPZP+Q/3oAgwBt19BBAG7RWMBswIM/ej+SJg8AAECX/4UBNAHhgANAAABERQXFjsBFSMiJyY1EQMHMz1b/femb2MHhviUmlZmsJ6P4QdkAAABAl/99AMHB4wAAwAAASMRMwMHp6f99AmYAAEAl/3qAwcHbQANAAABETQnJisBNTMyFxYVEQJgND1b/finbWT96gd9mVdmsJ6R3/iLAAABAl/9/ATQB4YAGAAAASYnJhkBMxEQFxY7ARUHBgcGGQEjERA3NgMUNiRap2NF6Tc360Njp1omAsEhPJgBuAIY/fT+TWNFuwEEQV/+Sf30AhgBvZM9AAEAl/4UAwcHhgANAAABMxEUBwYrATUzMjc2NQJgp2Rvpfj9Wz00B4b4nOGPnrBmVpoAAQEUAMYEzwUKABwAAAEyFxYzMjcSEzYzMhYVFAcAAQYjIicmJyY1NDc2AZgjEiQPDAz91zh6HBQd/qT+1xRAQQwfKS8/JwKOQHgUAcIBFkgMCQ4p/jD9/CQGD4qZJyonGAABAGkAzAn5BDgACQAAARUBJzchNSEnNwn4/p9s0fdtCJPRbAKvWv53eOmq6XgAAv0nBQ7/PwXZAAMABwAAATMVIyUzFSP+iLa2/qC3twXZy8vLAAAB/SAE7v9GBfgABgAAATMTIycHI/3fqb59lpV9Bfj+9rKyAAAB/RkFBv9NBfgADQAAATMeATMyNjczDgEjIib9GmoLWUtKVw9qCZCBgZAF+DY5Nzh3e3oAAf3XBQ7+jwXbAAMAAAEzFSP917i4BdvNAAABAAAAnANUACsAaAAMAAEAAAAAAAAAAAAAAAAACAAEAAAAFQAVACsAPwB7AMcBFQFiAXABjQGpAc8B6AH4AgUCEQIfAk0CZAKTAs4C6wMbA1cDagOwA+sD/AQSBCcEOgROBIcE+wUXBU0FewWjBbsF0AYEBhwGKQY/BlkGaQaHBp4G0AbyBywHXQeZB6wHzQfiCAIIIQg4CE8IYQhwCIIImAilCLQI6wkbCUYJdgmnCccKBQonCjkKVApuCnsKrwrQCvoLKQtZC3gLswvUC/gMDAwpDEkMaAx/DLEMvwzxDSENNA1eDWoNiw2XDaMNrw27Dd0N6Q31DgAODA4YDiMOLg45DkUOUA5cDmwOdw6CDpQOrg67DsgO2Q7pDwQPHg81D00PZA++D9oP5xADEB8QLRBJEFkQZhB3EIgQlRClEL4Q6REDERARKhFVEW4RnxG2EckR2xH1EgIAAAABAAAAAl64bzcxNF8PPPUAHwgAAAAAAOD60TkAAAAA4PrROfin/EwM6gncACAACAACAAAAAAAABFIAWwJJAAAC4gEWA08AsQYIAI4ElACZBtcAZQWdAHQB+gCxAs8AngLPAJMDmQA2BggAwwJJAI4CmQBaAkkAxQJtAAAElAB5BJQAygSUAIcElACMBJQAWgSUAI4ElACABJQAlwSUAH0ElAB0Am0A2AJtAI4GCADDBggAwwYIAMMD0gCEBzMAeQTsAA4E8AC0BQcAZwWLALQEjAC0BCQAtAWUAGcFagC0Ah8AtAIf/6EEuAC0BAIAtAY2ALQFYgC0BaoAZwRXALQFqgBnBQAAtASSAHkEZf/7BUUAoATsAA4HHgA9BO4ANgRl//0E7gBSAs8AngJtAAACzwCzBggAwwOZ/+4DmQCZBGkAbgSSAKcD9QBlBJIAZQRuAGUCiAAqBJIAZQSQAKcCAACtAgD/3wQrAKcCAACtBwMApwSQAKcEZwBlBJIApwSSAGUC9QCnA8AAYwLSADEEkACcBEIANgXjAE0EQgA1BEIANgPHAE8ElADmAm0A6gSUAOYGCADDA5kAwQLiAFQCSQDFA5kBBQTsAA4FBwBnAh///wWqAGcGCAD8BUUAoAVFAKAEaQBuA/UAZQIA/+IEZwBlBJAAnASQAJwFlABnBJIAZQIfALQCAACtBJIAeQPAAGMDmQCtA5kAswOZAFoHMwBaAkkAnAJJAKADugCcA7oAnAQ/ARQHMwDUBggAaQYIAMMDmQCeA5kAngOZAJ4DmQCeA5kCSwOZAJ4DmQCeA5kAngOZAJ4DmQCeA5kCSwOZAJ4FZgJfBWYAlwVmAl8FZgJfBWYAlwVmAl8FZgCXBggBFApSAGkAAP0o/SH9Gv3YAAAAAQAAB23+HQAADX74p/rjDOoAAQAAAAAAAAAAAAAAAAAAAJkAAQOmAZAABAAABTMFmQAAAR4FMwWZAAAD1wBmAhIAAAILBgYDCAQCAgSAAAAHAACAYAAAAAAAAAAAUGZFZABAACAnEwYU/hQBmgdtAeMAAAAQAAAAAAAAAAAAAgAAAAMAAAAUAAMAAQAAABQABADYAAAAMgAgAAQAEgB+ALIAtwDCAMcAzgDXANwA4gDnAO4A9gD8AR8BMQFfIBQgGSAdICIgJiGSIkgnE///AAAAIACyALcAwgDHAM4A1gDbAOIA5wDuAPYA+wEeATABXiATIBggHCAiICYhkiJIJxP////h/6//q/+i/57/mP+R/47/if+F/3//eP90/1P/Q/8X4GbgY+Bh4F3gWt7v3jrZgwABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAKIAAwABBAkAAAEwAAAAAwABBAkAAQAqATAAAwABBAkAAgAIAVoAAwABBAkAAwAqATAAAwABBAkABAAqATAAAwABBAkABQAYAWIAAwABBAkABgAmAXoAAwABBAkACAAiAaAAAwABBAkACwA6AcIAAwABBAkADSU6AfwAAwABBAkADgBoJzYAAwABBAkAEAAWJ54AAwABBAkAEQASJ7QAQwBvAHAAeQByAGkAZwBoAHQAIAAoAGMAKQAgADIAMAAwADMAIABiAHkAIABCAGkAdABzAHQAcgBlAGEAbQAsACAASQBuAGMALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgAKAEMAbwBwAHkAcgBpAGcAaAB0ACAAKABjACkAIAAyADAAMAA2ACAAYgB5ACAAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgAKAEQAZQBqAGEAVgB1ACAAYwBoAGEAbgBnAGUAcwAgAGEAcgBlACAAaQBuACAAcAB1AGIAbABpAGMAIABkAG8AbQBhAGkAbgAKAEQAZQBqAGEAVgB1ACAAUwBhAG4AcwAgAEMAbwBuAGQAZQBuAHMAZQBkAEIAbwBvAGsAVgBlAHIAcwBpAG8AbgAgADIALgAzADcARABlAGoAYQBWAHUAUwBhAG4AcwBDAG8AbgBkAGUAbgBzAGUAZABEAGUAagBhAFYAdQAgAGYAbwBuAHQAcwAgAHQAZQBhAG0AaAB0AHQAcAA6AC8ALwBkAGUAagBhAHYAdQAuAHMAbwB1AHIAYwBlAGYAbwByAGcAZQAuAG4AZQB0AEYAbwBuAHQAcwAgAGEAcgBlACAAKABjACkAIABCAGkAdABzAHQAcgBlAGEAbQAgACgAcwBlAGUAIABiAGUAbABvAHcAKQAuACAARABlAGoAYQBWAHUAIABjAGgAYQBuAGcAZQBzACAAYQByAGUAIABpAG4AIABwAHUAYgBsAGkAYwAgAGQAbwBtAGEAaQBuAC4AIABHAGwAeQBwAGgAcwAgAGkAbQBwAG8AcgB0AGUAZAAgAGYAcgBvAG0AIABBAHIAZQB2ACAAZgBvAG4AdABzACAAYQByAGUAIAAoAGMAKQAgAFQAYQB2AG0AagB1AG4AZwAgAEIAYQBoACAAKABzAGUAZQAgAGIAZQBsAG8AdwApAAoACgBCAGkAdABzAHQAcgBlAGEAbQAgAFYAZQByAGEAIABGAG8AbgB0AHMAIABDAG8AcAB5AHIAaQBnAGgAdAAKAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAAoACgBDAG8AcAB5AHIAaQBnAGgAdAAgACgAYwApACAAMgAwADAAMwAgAGIAeQAgAEIAaQB0AHMAdAByAGUAYQBtACwAIABJAG4AYwAuACAAQQBsAGwAIABSAGkAZwBoAHQAcwAgAFIAZQBzAGUAcgB2AGUAZAAuACAAQgBpAHQAcwB0AHIAZQBhAG0AIABWAGUAcgBhACAAaQBzAAoAYQAgAHQAcgBhAGQAZQBtAGEAcgBrACAAbwBmACAAQgBpAHQAcwB0AHIAZQBhAG0ALAAgAEkAbgBjAC4ACgAKAFAAZQByAG0AaQBzAHMAaQBvAG4AIABpAHMAIABoAGUAcgBlAGIAeQAgAGcAcgBhAG4AdABlAGQALAAgAGYAcgBlAGUAIABvAGYAIABjAGgAYQByAGcAZQAsACAAdABvACAAYQBuAHkAIABwAGUAcgBzAG8AbgAgAG8AYgB0AGEAaQBuAGkAbgBnACAAYQAgAGMAbwBwAHkACgBvAGYAIAB0AGgAZQAgAGYAbwBuAHQAcwAgAGEAYwBjAG8AbQBwAGEAbgB5AGkAbgBnACAAdABoAGkAcwAgAGwAaQBjAGUAbgBzAGUAIAAoACIARgBvAG4AdABzACIAKQAgAGEAbgBkACAAYQBzAHMAbwBjAGkAYQB0AGUAZAAKAGQAbwBjAHUAbQBlAG4AdABhAHQAaQBvAG4AIABmAGkAbABlAHMAIAAoAHQAaABlACAAIgBGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACIAKQAsACAAdABvACAAcgBlAHAAcgBvAGQAdQBjAGUAIABhAG4AZAAgAGQAaQBzAHQAcgBpAGIAdQB0AGUAIAB0AGgAZQAKAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUALAAgAGkAbgBjAGwAdQBkAGkAbgBnACAAdwBpAHQAaABvAHUAdAAgAGwAaQBtAGkAdABhAHQAaQBvAG4AIAB0AGgAZQAgAHIAaQBnAGgAdABzACAAdABvACAAdQBzAGUALAAgAGMAbwBwAHkALAAgAG0AZQByAGcAZQAsAAoAcAB1AGIAbABpAHMAaAAsACAAZABpAHMAdAByAGkAYgB1AHQAZQAsACAAYQBuAGQALwBvAHIAIABzAGUAbABsACAAYwBvAHAAaQBlAHMAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUALAAgAGEAbgBkACAAdABvACAAcABlAHIAbQBpAHQACgBwAGUAcgBzAG8AbgBzACAAdABvACAAdwBoAG8AbQAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAGkAcwAgAGYAdQByAG4AaQBzAGgAZQBkACAAdABvACAAZABvACAAcwBvACwAIABzAHUAYgBqAGUAYwB0ACAAdABvACAAdABoAGUACgBmAG8AbABsAG8AdwBpAG4AZwAgAGMAbwBuAGQAaQB0AGkAbwBuAHMAOgAKAAoAVABoAGUAIABhAGIAbwB2AGUAIABjAG8AcAB5AHIAaQBnAGgAdAAgAGEAbgBkACAAdAByAGEAZABlAG0AYQByAGsAIABuAG8AdABpAGMAZQBzACAAYQBuAGQAIAB0AGgAaQBzACAAcABlAHIAbQBpAHMAcwBpAG8AbgAgAG4AbwB0AGkAYwBlACAAcwBoAGEAbABsAAoAYgBlACAAaQBuAGMAbAB1AGQAZQBkACAAaQBuACAAYQBsAGwAIABjAG8AcABpAGUAcwAgAG8AZgAgAG8AbgBlACAAbwByACAAbQBvAHIAZQAgAG8AZgAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAHQAeQBwAGUAZgBhAGMAZQBzAC4ACgAKAFQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAG0AYQB5ACAAYgBlACAAbQBvAGQAaQBmAGkAZQBkACwAIABhAGwAdABlAHIAZQBkACwAIABvAHIAIABhAGQAZABlAGQAIAB0AG8ALAAgAGEAbgBkACAAaQBuACAAcABhAHIAdABpAGMAdQBsAGEAcgAKAHQAaABlACAAZABlAHMAaQBnAG4AcwAgAG8AZgAgAGcAbAB5AHAAaABzACAAbwByACAAYwBoAGEAcgBhAGMAdABlAHIAcwAgAGkAbgAgAHQAaABlACAARgBvAG4AdABzACAAbQBhAHkAIABiAGUAIABtAG8AZABpAGYAaQBlAGQAIABhAG4AZAAKAGEAZABkAGkAdABpAG8AbgBhAGwAIABnAGwAeQBwAGgAcwAgAG8AcgAgAGMAaABhAHIAYQBjAHQAZQByAHMAIABtAGEAeQAgAGIAZQAgAGEAZABkAGUAZAAgAHQAbwAgAHQAaABlACAARgBvAG4AdABzACwAIABvAG4AbAB5ACAAaQBmACAAdABoAGUAIABmAG8AbgB0AHMACgBhAHIAZQAgAHIAZQBuAGEAbQBlAGQAIAB0AG8AIABuAGEAbQBlAHMAIABuAG8AdAAgAGMAbwBuAHQAYQBpAG4AaQBuAGcAIABlAGkAdABoAGUAcgAgAHQAaABlACAAdwBvAHIAZABzACAAIgBCAGkAdABzAHQAcgBlAGEAbQAiACAAbwByACAAdABoAGUAIAB3AG8AcgBkAAoAIgBWAGUAcgBhACIALgAKAAoAVABoAGkAcwAgAEwAaQBjAGUAbgBzAGUAIABiAGUAYwBvAG0AZQBzACAAbgB1AGwAbAAgAGEAbgBkACAAdgBvAGkAZAAgAHQAbwAgAHQAaABlACAAZQB4AHQAZQBuAHQAIABhAHAAcABsAGkAYwBhAGIAbABlACAAdABvACAARgBvAG4AdABzACAAbwByACAARgBvAG4AdAAKAFMAbwBmAHQAdwBhAHIAZQAgAHQAaABhAHQAIABoAGEAcwAgAGIAZQBlAG4AIABtAG8AZABpAGYAaQBlAGQAIABhAG4AZAAgAGkAcwAgAGQAaQBzAHQAcgBpAGIAdQB0AGUAZAAgAHUAbgBkAGUAcgAgAHQAaABlACAAIgBCAGkAdABzAHQAcgBlAGEAbQAKAFYAZQByAGEAIgAgAG4AYQBtAGUAcwAuAAoACgBUAGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABtAGEAeQAgAGIAZQAgAHMAbwBsAGQAIABhAHMAIABwAGEAcgB0ACAAbwBmACAAYQAgAGwAYQByAGcAZQByACAAcwBvAGYAdAB3AGEAcgBlACAAcABhAGMAawBhAGcAZQAgAGIAdQB0ACAAbgBvAAoAYwBvAHAAeQAgAG8AZgAgAG8AbgBlACAAbwByACAAbQBvAHIAZQAgAG8AZgAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAHQAeQBwAGUAZgBhAGMAZQBzACAAbQBhAHkAIABiAGUAIABzAG8AbABkACAAYgB5ACAAaQB0AHMAZQBsAGYALgAKAAoAVABIAEUAIABGAE8ATgBUACAAUwBPAEYAVABXAEEAUgBFACAASQBTACAAUABSAE8AVgBJAEQARQBEACAAIgBBAFMAIABJAFMAIgAsACAAVwBJAFQASABPAFUAVAAgAFcAQQBSAFIAQQBOAFQAWQAgAE8ARgAgAEEATgBZACAASwBJAE4ARAAsACAARQBYAFAAUgBFAFMAUwAKAE8AUgAgAEkATQBQAEwASQBFAEQALAAgAEkATgBDAEwAVQBEAEkATgBHACAAQgBVAFQAIABOAE8AVAAgAEwASQBNAEkAVABFAEQAIABUAE8AIABBAE4AWQAgAFcAQQBSAFIAQQBOAFQASQBFAFMAIABPAEYAIABNAEUAUgBDAEgAQQBOAFQAQQBCAEkATABJAFQAWQAsAAoARgBJAFQATgBFAFMAUwAgAEYATwBSACAAQQAgAFAAQQBSAFQASQBDAFUATABBAFIAIABQAFUAUgBQAE8AUwBFACAAQQBOAEQAIABOAE8ATgBJAE4ARgBSAEkATgBHAEUATQBFAE4AVAAgAE8ARgAgAEMATwBQAFkAUgBJAEcASABUACwAIABQAEEAVABFAE4AVAAsAAoAVABSAEEARABFAE0AQQBSAEsALAAgAE8AUgAgAE8AVABIAEUAUgAgAFIASQBHAEgAVAAuACAASQBOACAATgBPACAARQBWAEUATgBUACAAUwBIAEEATABMACAAQgBJAFQAUwBUAFIARQBBAE0AIABPAFIAIABUAEgARQAgAEcATgBPAE0ARQAKAEYATwBVAE4ARABBAFQASQBPAE4AIABCAEUAIABMAEkAQQBCAEwARQAgAEYATwBSACAAQQBOAFkAIABDAEwAQQBJAE0ALAAgAEQAQQBNAEEARwBFAFMAIABPAFIAIABPAFQASABFAFIAIABMAEkAQQBCAEkATABJAFQAWQAsACAASQBOAEMATABVAEQASQBOAEcACgBBAE4AWQAgAEcARQBOAEUAUgBBAEwALAAgAFMAUABFAEMASQBBAEwALAAgAEkATgBEAEkAUgBFAEMAVAAsACAASQBOAEMASQBEAEUATgBUAEEATAAsACAATwBSACAAQwBPAE4AUwBFAFEAVQBFAE4AVABJAEEATAAgAEQAQQBNAEEARwBFAFMALAAKAFcASABFAFQASABFAFIAIABJAE4AIABBAE4AIABBAEMAVABJAE8ATgAgAE8ARgAgAEMATwBOAFQAUgBBAEMAVAAsACAAVABPAFIAVAAgAE8AUgAgAE8AVABIAEUAUgBXAEkAUwBFACwAIABBAFIASQBTAEkATgBHACAARgBSAE8ATQAsACAATwBVAFQAIABPAEYACgBUAEgARQAgAFUAUwBFACAATwBSACAASQBOAEEAQgBJAEwASQBUAFkAIABUAE8AIABVAFMARQAgAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAgAE8AUgAgAEYAUgBPAE0AIABPAFQASABFAFIAIABEAEUAQQBMAEkATgBHAFMAIABJAE4AIABUAEgARQAKAEYATwBOAFQAIABTAE8ARgBUAFcAQQBSAEUALgAKAAoARQB4AGMAZQBwAHQAIABhAHMAIABjAG8AbgB0AGEAaQBuAGUAZAAgAGkAbgAgAHQAaABpAHMAIABuAG8AdABpAGMAZQAsACAAdABoAGUAIABuAGEAbQBlAHMAIABvAGYAIABHAG4AbwBtAGUALAAgAHQAaABlACAARwBuAG8AbQBlAAoARgBvAHUAbgBkAGEAdABpAG8AbgAsACAAYQBuAGQAIABCAGkAdABzAHQAcgBlAGEAbQAgAEkAbgBjAC4ALAAgAHMAaABhAGwAbAAgAG4AbwB0ACAAYgBlACAAdQBzAGUAZAAgAGkAbgAgAGEAZAB2AGUAcgB0AGkAcwBpAG4AZwAgAG8AcgAKAG8AdABoAGUAcgB3AGkAcwBlACAAdABvACAAcAByAG8AbQBvAHQAZQAgAHQAaABlACAAcwBhAGwAZQAsACAAdQBzAGUAIABvAHIAIABvAHQAaABlAHIAIABkAGUAYQBsAGkAbgBnAHMAIABpAG4AIAB0AGgAaQBzACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAKAHcAaQB0AGgAbwB1AHQAIABwAHIAaQBvAHIAIAB3AHIAaQB0AHQAZQBuACAAYQB1AHQAaABvAHIAaQB6AGEAdABpAG8AbgAgAGYAcgBvAG0AIAB0AGgAZQAgAEcAbgBvAG0AZQAgAEYAbwB1AG4AZABhAHQAaQBvAG4AIABvAHIAIABCAGkAdABzAHQAcgBlAGEAbQAKAEkAbgBjAC4ALAAgAHIAZQBzAHAAZQBjAHQAaQB2AGUAbAB5AC4AIABGAG8AcgAgAGYAdQByAHQAaABlAHIAIABpAG4AZgBvAHIAbQBhAHQAaQBvAG4ALAAgAGMAbwBuAHQAYQBjAHQAOgAgAGYAbwBuAHQAcwAgAGEAdAAgAGcAbgBvAG0AZQAgAGQAbwB0AAoAbwByAGcALgAgAAoACgBBAHIAZQB2ACAARgBvAG4AdABzACAAQwBvAHAAeQByAGkAZwBoAHQACgAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAKAAoAQwBvAHAAeQByAGkAZwBoAHQAIAAoAGMAKQAgADIAMAAwADYAIABiAHkAIABUAGEAdgBtAGoAbwBuAGcAIABCAGEAaAAuACAAQQBsAGwAIABSAGkAZwBoAHQAcwAgAFIAZQBzAGUAcgB2AGUAZAAuAAoACgBQAGUAcgBtAGkAcwBzAGkAbwBuACAAaQBzACAAaABlAHIAZQBiAHkAIABnAHIAYQBuAHQAZQBkACwAIABmAHIAZQBlACAAbwBmACAAYwBoAGEAcgBnAGUALAAgAHQAbwAgAGEAbgB5ACAAcABlAHIAcwBvAG4AIABvAGIAdABhAGkAbgBpAG4AZwAKAGEAIABjAG8AcAB5ACAAbwBmACAAdABoAGUAIABmAG8AbgB0AHMAIABhAGMAYwBvAG0AcABhAG4AeQBpAG4AZwAgAHQAaABpAHMAIABsAGkAYwBlAG4AcwBlACAAKAAiAEYAbwBuAHQAcwAiACkAIABhAG4AZAAKAGEAcwBzAG8AYwBpAGEAdABlAGQAIABkAG8AYwB1AG0AZQBuAHQAYQB0AGkAbwBuACAAZgBpAGwAZQBzACAAKAB0AGgAZQAgACIARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAiACkALAAgAHQAbwAgAHIAZQBwAHIAbwBkAHUAYwBlAAoAYQBuAGQAIABkAGkAcwB0AHIAaQBiAHUAdABlACAAdABoAGUAIABtAG8AZABpAGYAaQBjAGEAdABpAG8AbgBzACAAdABvACAAdABoAGUAIABCAGkAdABzAHQAcgBlAGEAbQAgAFYAZQByAGEAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwACgBpAG4AYwBsAHUAZABpAG4AZwAgAHcAaQB0AGgAbwB1AHQAIABsAGkAbQBpAHQAYQB0AGkAbwBuACAAdABoAGUAIAByAGkAZwBoAHQAcwAgAHQAbwAgAHUAcwBlACwAIABjAG8AcAB5ACwAIABtAGUAcgBnAGUALAAgAHAAdQBiAGwAaQBzAGgALAAKAGQAaQBzAHQAcgBpAGIAdQB0AGUALAAgAGEAbgBkAC8AbwByACAAcwBlAGwAbAAgAGMAbwBwAGkAZQBzACAAbwBmACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwAIABhAG4AZAAgAHQAbwAgAHAAZQByAG0AaQB0AAoAcABlAHIAcwBvAG4AcwAgAHQAbwAgAHcAaABvAG0AIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABpAHMAIABmAHUAcgBuAGkAcwBoAGUAZAAgAHQAbwAgAGQAbwAgAHMAbwAsACAAcwB1AGIAagBlAGMAdAAgAHQAbwAKAHQAaABlACAAZgBvAGwAbABvAHcAaQBuAGcAIABjAG8AbgBkAGkAdABpAG8AbgBzADoACgAKAFQAaABlACAAYQBiAG8AdgBlACAAYwBvAHAAeQByAGkAZwBoAHQAIABhAG4AZAAgAHQAcgBhAGQAZQBtAGEAcgBrACAAbgBvAHQAaQBjAGUAcwAgAGEAbgBkACAAdABoAGkAcwAgAHAAZQByAG0AaQBzAHMAaQBvAG4AIABuAG8AdABpAGMAZQAKAHMAaABhAGwAbAAgAGIAZQAgAGkAbgBjAGwAdQBkAGUAZAAgAGkAbgAgAGEAbABsACAAYwBvAHAAaQBlAHMAIABvAGYAIABvAG4AZQAgAG8AcgAgAG0AbwByAGUAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUACgB0AHkAcABlAGYAYQBjAGUAcwAuAAoACgBUAGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABtAGEAeQAgAGIAZQAgAG0AbwBkAGkAZgBpAGUAZAAsACAAYQBsAHQAZQByAGUAZAAsACAAbwByACAAYQBkAGQAZQBkACAAdABvACwAIABhAG4AZAAgAGkAbgAKAHAAYQByAHQAaQBjAHUAbABhAHIAIAB0AGgAZQAgAGQAZQBzAGkAZwBuAHMAIABvAGYAIABnAGwAeQBwAGgAcwAgAG8AcgAgAGMAaABhAHIAYQBjAHQAZQByAHMAIABpAG4AIAB0AGgAZQAgAEYAbwBuAHQAcwAgAG0AYQB5ACAAYgBlAAoAbQBvAGQAaQBmAGkAZQBkACAAYQBuAGQAIABhAGQAZABpAHQAaQBvAG4AYQBsACAAZwBsAHkAcABoAHMAIABvAHIAIABjAGgAYQByAGEAYwB0AGUAcgBzACAAbQBhAHkAIABiAGUAIABhAGQAZABlAGQAIAB0AG8AIAB0AGgAZQAKAEYAbwBuAHQAcwAsACAAbwBuAGwAeQAgAGkAZgAgAHQAaABlACAAZgBvAG4AdABzACAAYQByAGUAIAByAGUAbgBhAG0AZQBkACAAdABvACAAbgBhAG0AZQBzACAAbgBvAHQAIABjAG8AbgB0AGEAaQBuAGkAbgBnACAAZQBpAHQAaABlAHIACgB0AGgAZQAgAHcAbwByAGQAcwAgACIAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgAIgAgAG8AcgAgAHQAaABlACAAdwBvAHIAZAAgACIAQQByAGUAdgAiAC4ACgAKAFQAaABpAHMAIABMAGkAYwBlAG4AcwBlACAAYgBlAGMAbwBtAGUAcwAgAG4AdQBsAGwAIABhAG4AZAAgAHYAbwBpAGQAIAB0AG8AIAB0AGgAZQAgAGUAeAB0AGUAbgB0ACAAYQBwAHAAbABpAGMAYQBiAGwAZQAgAHQAbwAgAEYAbwBuAHQAcwAKAG8AcgAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB0AGgAYQB0ACAAaABhAHMAIABiAGUAZQBuACAAbQBvAGQAaQBmAGkAZQBkACAAYQBuAGQAIABpAHMAIABkAGkAcwB0AHIAaQBiAHUAdABlAGQAIAB1AG4AZABlAHIAIAB0AGgAZQAgAAoAIgBUAGEAdgBtAGoAbwBuAGcAIABCAGEAaAAgAEEAcgBlAHYAIgAgAG4AYQBtAGUAcwAuAAoACgBUAGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABtAGEAeQAgAGIAZQAgAHMAbwBsAGQAIABhAHMAIABwAGEAcgB0ACAAbwBmACAAYQAgAGwAYQByAGcAZQByACAAcwBvAGYAdAB3AGEAcgBlACAAcABhAGMAawBhAGcAZQAgAGIAdQB0AAoAbgBvACAAYwBvAHAAeQAgAG8AZgAgAG8AbgBlACAAbwByACAAbQBvAHIAZQAgAG8AZgAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAHQAeQBwAGUAZgBhAGMAZQBzACAAbQBhAHkAIABiAGUAIABzAG8AbABkACAAYgB5AAoAaQB0AHMAZQBsAGYALgAKAAoAVABIAEUAIABGAE8ATgBUACAAUwBPAEYAVABXAEEAUgBFACAASQBTACAAUABSAE8AVgBJAEQARQBEACAAIgBBAFMAIABJAFMAIgAsACAAVwBJAFQASABPAFUAVAAgAFcAQQBSAFIAQQBOAFQAWQAgAE8ARgAgAEEATgBZACAASwBJAE4ARAAsAAoARQBYAFAAUgBFAFMAUwAgAE8AUgAgAEkATQBQAEwASQBFAEQALAAgAEkATgBDAEwAVQBEAEkATgBHACAAQgBVAFQAIABOAE8AVAAgAEwASQBNAEkAVABFAEQAIABUAE8AIABBAE4AWQAgAFcAQQBSAFIAQQBOAFQASQBFAFMAIABPAEYACgBNAEUAUgBDAEgAQQBOAFQAQQBCAEkATABJAFQAWQAsACAARgBJAFQATgBFAFMAUwAgAEYATwBSACAAQQAgAFAAQQBSAFQASQBDAFUATABBAFIAIABQAFUAUgBQAE8AUwBFACAAQQBOAEQAIABOAE8ATgBJAE4ARgBSAEkATgBHAEUATQBFAE4AVAAKAE8ARgAgAEMATwBQAFkAUgBJAEcASABUACwAIABQAEEAVABFAE4AVAAsACAAVABSAEEARABFAE0AQQBSAEsALAAgAE8AUgAgAE8AVABIAEUAUgAgAFIASQBHAEgAVAAuACAASQBOACAATgBPACAARQBWAEUATgBUACAAUwBIAEEATABMAAoAVABBAFYATQBKAE8ATgBHACAAQgBBAEgAIABCAEUAIABMAEkAQQBCAEwARQAgAEYATwBSACAAQQBOAFkAIABDAEwAQQBJAE0ALAAgAEQAQQBNAEEARwBFAFMAIABPAFIAIABPAFQASABFAFIAIABMAEkAQQBCAEkATABJAFQAWQAsAAoASQBOAEMATABVAEQASQBOAEcAIABBAE4AWQAgAEcARQBOAEUAUgBBAEwALAAgAFMAUABFAEMASQBBAEwALAAgAEkATgBEAEkAUgBFAEMAVAAsACAASQBOAEMASQBEAEUATgBUAEEATAAsACAATwBSACAAQwBPAE4AUwBFAFEAVQBFAE4AVABJAEEATAAKAEQAQQBNAEEARwBFAFMALAAgAFcASABFAFQASABFAFIAIABJAE4AIABBAE4AIABBAEMAVABJAE8ATgAgAE8ARgAgAEMATwBOAFQAUgBBAEMAVAAsACAAVABPAFIAVAAgAE8AUgAgAE8AVABIAEUAUgBXAEkAUwBFACwAIABBAFIASQBTAEkATgBHAAoARgBSAE8ATQAsACAATwBVAFQAIABPAEYAIABUAEgARQAgAFUAUwBFACAATwBSACAASQBOAEEAQgBJAEwASQBUAFkAIABUAE8AIABVAFMARQAgAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAgAE8AUgAgAEYAUgBPAE0ACgBPAFQASABFAFIAIABEAEUAQQBMAEkATgBHAFMAIABJAE4AIABUAEgARQAgAEYATwBOAFQAIABTAE8ARgBUAFcAQQBSAEUALgAKAAoARQB4AGMAZQBwAHQAIABhAHMAIABjAG8AbgB0AGEAaQBuAGUAZAAgAGkAbgAgAHQAaABpAHMAIABuAG8AdABpAGMAZQAsACAAdABoAGUAIABuAGEAbQBlACAAbwBmACAAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgAIABzAGgAYQBsAGwAIABuAG8AdAAKAGIAZQAgAHUAcwBlAGQAIABpAG4AIABhAGQAdgBlAHIAdABpAHMAaQBuAGcAIABvAHIAIABvAHQAaABlAHIAdwBpAHMAZQAgAHQAbwAgAHAAcgBvAG0AbwB0AGUAIAB0AGgAZQAgAHMAYQBsAGUALAAgAHUAcwBlACAAbwByACAAbwB0AGgAZQByAAoAZABlAGEAbABpAG4AZwBzACAAaQBuACAAdABoAGkAcwAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB3AGkAdABoAG8AdQB0ACAAcAByAGkAbwByACAAdwByAGkAdAB0AGUAbgAgAGEAdQB0AGgAbwByAGkAegBhAHQAaQBvAG4ACgBmAHIAbwBtACAAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgALgAgAEYAbwByACAAZgB1AHIAdABoAGUAcgAgAGkAbgBmAG8AcgBtAGEAdABpAG8AbgAsACAAYwBvAG4AdABhAGMAdAA6ACAAdABhAHYAbQBqAG8AbgBnACAAQAAgAGYAcgBlAGUACgAuACAAZgByAC4AaAB0AHQAcAA6AC8ALwBkAGUAagBhAHYAdQAuAHMAbwB1AHIAYwBlAGYAbwByAGcAZQAuAG4AZQB0AC8AdwBpAGsAaQAvAGkAbgBkAGUAeAAuAHAAaABwAC8ATABpAGMAZQBuAHMAZQBEAGUAagBhAFYAdQAgAFMAYQBuAHMAQwBvAG4AZABlAG4AcwBlAGQAAwAAAAAAAP/YAFoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIACAAC//8AAwABAAAADAAAAAAAAAACAAQAAQBfAAEAYQBiAAEAZAB2AAEAeQCXAAEAAQAAAAoAHAAeAAFERkxUAAgABAAAAAD//wAAAAAAAAABAAAACgCSAJQAFERGTFQAemFyYWIAhGFybW4AhGJyYWkAhGNhbnMAhGNoZXIAhGN5cmwAhGdlb3IAhGdyZWsAhGhhbmkAhGhlYnIAhGthbmEAhGxhbyAAhGxhdG4AhG1hdGgAhG5rbyAAhG9nYW0AhHJ1bnIAhHRmbmcAhHRoYWkAhAAEAAAAAP//AAAAAAAAAAAAAAAAAAEAAAAKAOAA6ABQADwMAAfdAAAAAAKCAAAEYAAABdUAAAAAAAAEYAAAAAAAAAAAAAAAAAAABGAAAAAAAAABaAAABGAAAABVAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEOAAACdgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAQ4AAABaAAAAWgAAAQ4AAAAAAAAAAAAAAQ4AAABaAAAAWgAAAQ4AAABaAAAAWgAAAFoAAAFyAAAAWgAAAFoAAAI4AAD7jwAAADwAAAAAAAAAAAAoAB4AMAAHAAMAOgBiAIoAsgDaARYBNAFwAY4BrAABAAcACQAKADwAPgBcAF0AXgABAAMAHgBAAIEABAAAAAAAAAADAIUAAAAoCXUAAACEACgAKAmNAAEAgwAoAAAJlgAAAAQAAAAAAAAAAwCIAAAAKAl1AAAAhwAoACgJjQABAIYAKAAACZYAAAAEAAAAAAAAAAMAiwAAACgJdQAAAIoAKAAoCY0AAQCJACgAAAlxAAAABAAAAAAAAAADAI4AAAAoCWYAAACNACgAKAl+AAEAjAAoAAAJcQAAAAQAAAAAAAAABQCRAAAAKAlyAAAAkgAoACgJmAABAJAAKAAoCYoAAACSACgAKAmYAAEAjwAoAAAJgwAAAAQAAAAAAAAAAgBdAAAAKAgAAAAAXQAoAAAIAAABAAQAAAAAAAAABQCVAAAAKAlyAAAAkgAoACgJmAABAJQAKAAoCYoAAACSACgAKAmYAAEAkwAoAAAJgwAAAAQAAAAAAAAAAgAeAAAAJASCAAAAHgAkAAAEggABAAQAAAAAAAAAAgBAAAAAJAO+AAAAQAAkAAADvgABAAAAAgCBBUYAlwmQ", "cmap": {"32": 1, "33": 2, "34": 3, "35": 4, "36": 5, "37": 6, "38": 7, "39": 8, "40": 9, "41": 10, "42": 11, "43": 12, "44": 13, "45": 14, "46": 15, "47": 16, "48": 17, "49": 18, "50": 19, "51": 20, "52": 21, "53": 22, "54": 23, "55": 24, "56": 25, "57": 26, "58": 27, "59": 28, "60": 29, "61": 30, "62": 31, "63": 32, "64": 33, "65": 34, "66": 35, "67": 36, "68": 37, "69": 38, "70": 39, "71": 40, "72": 41, "73": 42, "74": 43, "75": 44, "76": 45, "77": 46, "78": 47, "79": 48, "80": 49, "81": 50, "82": 51, "83": 52, "84": 53, "85": 54, "86": 55, "87": 56, "88": 57, "89": 58, "90": 59, "91": 60, "92": 61, "93": 62, "94": 63, "95": 64, "96": 65, "97": 66, "98": 67, "99": 68, "100": 69, "101": 70, "102": 71, "103": 72, "104": 73, "105": 74, "106": 75, "107": 76, "108": 77, "109": 78, "110": 79, "111": 80, "112": 81, "113": 82, "114": 83, "115": 84, "116": 85, "117": 86, "118": 87, "119": 88, "120": 89, "121": 90, "122": 91, "123": 92, "124": 93, "125": 94, "126": 95, "178": 97, "183": 98, "194": 100, "199": 101, "206": 102, "214": 103, "215": 104, "219": 105, "220": 106, "226": 107, "231": 108, "238": 109, "246": 110, "251": 111, "252": 112, "286": 113, "287": 114, "304": 115, "305": 116, "350": 117, "351": 118, "8211": 121, "8212": 122, "8216": 123, "8217": 124, "8220": 125, "8221": 126, "8226": 127, "8230": 128, "8594": 129, "8776": 130, "10003": 150}, "w": {"1": 286, "2": 360, "3": 414, "4": 754, "5": 572, "6": 855, "7": 702, "8": 247, "9": 351, "10": 351, "11": 450, "12": 754, "13": 286, "14": 325, "15": 286, "16": 303, "17": 572, "18": 572, "19": 572, "20": 572, "21": 572, "22": 572, "23": 572, "24": 572, "25": 572, "26": 572, "27": 303, "28": 303, "29": 754, "30": 754, "31": 754, "32": 478, "33": 900, "34": 615, "35": 617, "36": 628, "37": 693, "38": 568, "39": 518, "40": 697, "41": 677, "42": 265, "43": 265, "44": 590, "45": 501, "46": 776, "47": 673, "48": 708, "49": 542, "50": 708, "51": 625, "52": 571, "53": 549, "54": 659, "55": 615, "56": 890, "57": 616, "58": 549, "59": 616, "60": 351, "61": 303, "62": 351, "63": 754, "64": 450, "65": 450, "66": 551, "67": 571, "68": 495, "69": 571, "70": 554, "71": 316, "72": 571, "73": 570, "74": 250, "75": 250, "76": 521, "77": 250, "78": 876, "79": 570, "80": 550, "81": 571, "82": 571, "83": 370, "84": 469, "85": 353, "86": 570, "87": 532, "88": 736, "89": 532, "90": 532, "91": 472, "92": 572, "93": 303, "94": 572, "95": 754, "97": 360, "98": 286, "100": 615, "101": 628, "102": 265, "103": 708, "104": 754, "105": 659, "106": 659, "107": 551, "108": 495, "109": 250, "110": 550, "111": 570, "112": 570, "113": 697, "114": 571, "115": 265, "116": 250, "117": 571, "118": 469, "121": 450, "122": 900, "123": 286, "124": 286, "125": 466, "126": 466, "127": 531, "128": 900, "129": 754, "130": 754, "150": 754}, "asc": 928, "desc": -236, "bbox": [-918, -463, 1614, 1232], "name": "DejaVuSansCondensed"}, "B": {"b64": "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AGoAYQB2AHUALgBzAG8AdQByAGMAZQBmAG8AcgBnAGUALgBuAGUAdABGAG8AbgB0AHMAIABhAHIAZQAgACgAYwApACAAQgBpAHQAcwB0AHIAZQBhAG0AIAAoAHMAZQBlACAAYgBlAGwAbwB3ACkALgAgAEQAZQBqAGEAVgB1ACAAYwBoAGEAbgBnAGUAcwAgAGEAcgBlACAAaQBuACAAcAB1AGIAbABpAGMAIABkAG8AbQBhAGkAbgAuACAARwBsAHkAcABoAHMAIABpAG0AcABvAHIAdABlAGQAIABmAHIAbwBtACAAQQByAGUAdgAgAGYAbwBuAHQAcwAgAGEAcgBlACAAKABjACkAIABUAGEAdgBtAGoAdQBuAGcAIABCAGEAaAAgACgAcwBlAGUAIABiAGUAbABvAHcAKQAKAAoAQgBpAHQAcwB0AHIAZQBhAG0AIABWAGUAcgBhACAARgBvAG4AdABzACAAQwBvAHAAeQByAGkAZwBoAHQACgAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAKAAoAQwBvAHAAeQByAGkAZwBoAHQAIAAoAGMAKQAgADIAMAAwADMAIABiAHkAIABCAGkAdABzAHQAcgBlAGEAbQAsACAASQBuAGMALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgAgAEIAaQB0AHMAdAByAGUAYQBtACAAVgBlAHIAYQAgAGkAcwAKAGEAIAB0AHIAYQBkAGUAbQBhAHIAawAgAG8AZgAgAEIAaQB0AHMAdAByAGUAYQBtACwAIABJAG4AYwAuAAoACgBQAGUAcgBtAGkAcwBzAGkAbwBuACAAaQBzACAAaABlAHIAZQBiAHkAIABnAHIAYQBuAHQAZQBkACwAIABmAHIAZQBlACAAbwBmACAAYwBoAGEAcgBnAGUALAAgAHQAbwAgAGEAbgB5ACAAcABlAHIAcwBvAG4AIABvAGIAdABhAGkAbgBpAG4AZwAgAGEAIABjAG8AcAB5AAoAbwBmACAAdABoAGUAIABmAG8AbgB0AHMAIABhAGMAYwBvAG0AcABhAG4AeQBpAG4AZwAgAHQAaABpAHMAIABsAGkAYwBlAG4AcwBlACAAKAAiAEYAbwBuAHQAcwAiACkAIABhAG4AZAAgAGEAcwBzAG8AYwBpAGEAdABlAGQACgBkAG8AYwB1AG0AZQBuAHQAYQB0AGkAbwBuACAAZgBpAGwAZQBzACAAKAB0AGgAZQAgACIARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAiACkALAAgAHQAbwAgAHIAZQBwAHIAbwBkAHUAYwBlACAAYQBuAGQAIABkAGkAcwB0AHIAaQBiAHUAdABlACAAdABoAGUACgBGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwAIABpAG4AYwBsAHUAZABpAG4AZwAgAHcAaQB0AGgAbwB1AHQAIABsAGkAbQBpAHQAYQB0AGkAbwBuACAAdABoAGUAIAByAGkAZwBoAHQAcwAgAHQAbwAgAHUAcwBlACwAIABjAG8AcAB5ACwAIABtAGUAcgBnAGUALAAKAHAAdQBiAGwAaQBzAGgALAAgAGQAaQBzAHQAcgBpAGIAdQB0AGUALAAgAGEAbgBkAC8AbwByACAAcwBlAGwAbAAgAGMAbwBwAGkAZQBzACAAbwBmACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwAIABhAG4AZAAgAHQAbwAgAHAAZQByAG0AaQB0AAoAcABlAHIAcwBvAG4AcwAgAHQAbwAgAHcAaABvAG0AIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABpAHMAIABmAHUAcgBuAGkAcwBoAGUAZAAgAHQAbwAgAGQAbwAgAHMAbwAsACAAcwB1AGIAagBlAGMAdAAgAHQAbwAgAHQAaABlAAoAZgBvAGwAbABvAHcAaQBuAGcAIABjAG8AbgBkAGkAdABpAG8AbgBzADoACgAKAFQAaABlACAAYQBiAG8AdgBlACAAYwBvAHAAeQByAGkAZwBoAHQAIABhAG4AZAAgAHQAcgBhAGQAZQBtAGEAcgBrACAAbgBvAHQAaQBjAGUAcwAgAGEAbgBkACAAdABoAGkAcwAgAHAAZQByAG0AaQBzAHMAaQBvAG4AIABuAG8AdABpAGMAZQAgAHMAaABhAGwAbAAKAGIAZQAgAGkAbgBjAGwAdQBkAGUAZAAgAGkAbgAgAGEAbABsACAAYwBvAHAAaQBlAHMAIABvAGYAIABvAG4AZQAgAG8AcgAgAG0AbwByAGUAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB0AHkAcABlAGYAYQBjAGUAcwAuAAoACgBUAGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABtAGEAeQAgAGIAZQAgAG0AbwBkAGkAZgBpAGUAZAAsACAAYQBsAHQAZQByAGUAZAAsACAAbwByACAAYQBkAGQAZQBkACAAdABvACwAIABhAG4AZAAgAGkAbgAgAHAAYQByAHQAaQBjAHUAbABhAHIACgB0AGgAZQAgAGQAZQBzAGkAZwBuAHMAIABvAGYAIABnAGwAeQBwAGgAcwAgAG8AcgAgAGMAaABhAHIAYQBjAHQAZQByAHMAIABpAG4AIAB0AGgAZQAgAEYAbwBuAHQAcwAgAG0AYQB5ACAAYgBlACAAbQBvAGQAaQBmAGkAZQBkACAAYQBuAGQACgBhAGQAZABpAHQAaQBvAG4AYQBsACAAZwBsAHkAcABoAHMAIABvAHIAIABjAGgAYQByAGEAYwB0AGUAcgBzACAAbQBhAHkAIABiAGUAIABhAGQAZABlAGQAIAB0AG8AIAB0AGgAZQAgAEYAbwBuAHQAcwAsACAAbwBuAGwAeQAgAGkAZgAgAHQAaABlACAAZgBvAG4AdABzAAoAYQByAGUAIAByAGUAbgBhAG0AZQBkACAAdABvACAAbgBhAG0AZQBzACAAbgBvAHQAIABjAG8AbgB0AGEAaQBuAGkAbgBnACAAZQBpAHQAaABlAHIAIAB0AGgAZQAgAHcAbwByAGQAcwAgACIAQgBpAHQAcwB0AHIAZQBhAG0AIgAgAG8AcgAgAHQAaABlACAAdwBvAHIAZAAKACIAVgBlAHIAYQAiAC4ACgAKAFQAaABpAHMAIABMAGkAYwBlAG4AcwBlACAAYgBlAGMAbwBtAGUAcwAgAG4AdQBsAGwAIABhAG4AZAAgAHYAbwBpAGQAIAB0AG8AIAB0AGgAZQAgAGUAeAB0AGUAbgB0ACAAYQBwAHAAbABpAGMAYQBiAGwAZQAgAHQAbwAgAEYAbwBuAHQAcwAgAG8AcgAgAEYAbwBuAHQACgBTAG8AZgB0AHcAYQByAGUAIAB0AGgAYQB0ACAAaABhAHMAIABiAGUAZQBuACAAbQBvAGQAaQBmAGkAZQBkACAAYQBuAGQAIABpAHMAIABkAGkAcwB0AHIAaQBiAHUAdABlAGQAIAB1AG4AZABlAHIAIAB0AGgAZQAgACIAQgBpAHQAcwB0AHIAZQBhAG0ACgBWAGUAcgBhACIAIABuAGEAbQBlAHMALgAKAAoAVABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAbQBhAHkAIABiAGUAIABzAG8AbABkACAAYQBzACAAcABhAHIAdAAgAG8AZgAgAGEAIABsAGEAcgBnAGUAcgAgAHMAbwBmAHQAdwBhAHIAZQAgAHAAYQBjAGsAYQBnAGUAIABiAHUAdAAgAG4AbwAKAGMAbwBwAHkAIABvAGYAIABvAG4AZQAgAG8AcgAgAG0AbwByAGUAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB0AHkAcABlAGYAYQBjAGUAcwAgAG0AYQB5ACAAYgBlACAAcwBvAGwAZAAgAGIAeQAgAGkAdABzAGUAbABmAC4ACgAKAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAgAEkAUwAgAFAAUgBPAFYASQBEAEUARAAgACIAQQBTACAASQBTACIALAAgAFcASQBUAEgATwBVAFQAIABXAEEAUgBSAEEATgBUAFkAIABPAEYAIABBAE4AWQAgAEsASQBOAEQALAAgAEUAWABQAFIARQBTAFMACgBPAFIAIABJAE0AUABMAEkARQBEACwAIABJAE4AQwBMAFUARABJAE4ARwAgAEIAVQBUACAATgBPAFQAIABMAEkATQBJAFQARQBEACAAVABPACAAQQBOAFkAIABXAEEAUgBSAEEATgBUAEkARQBTACAATwBGACAATQBFAFIAQwBIAEEATgBUAEEAQgBJAEwASQBUAFkALAAKAEYASQBUAE4ARQBTAFMAIABGAE8AUgAgAEEAIABQAEEAUgBUAEkAQwBVAEwAQQBSACAAUABVAFIAUABPAFMARQAgAEEATgBEACAATgBPAE4ASQBOAEYAUgBJAE4ARwBFAE0ARQBOAFQAIABPAEYAIABDAE8AUABZAFIASQBHAEgAVAAsACAAUABBAFQARQBOAFQALAAKAFQAUgBBAEQARQBNAEEAUgBLACwAIABPAFIAIABPAFQASABFAFIAIABSAEkARwBIAFQALgAgAEkATgAgAE4ATwAgAEUAVgBFAE4AVAAgAFMASABBAEwATAAgAEIASQBUAFMAVABSAEUAQQBNACAATwBSACAAVABIAEUAIABHAE4ATwBNAEUACgBGAE8AVQBOAEQAQQBUAEkATwBOACAAQgBFACAATABJAEEAQgBMAEUAIABGAE8AUgAgAEEATgBZACAAQwBMAEEASQBNACwAIABEAEEATQBBAEcARQBTACAATwBSACAATwBUAEgARQBSACAATABJAEEAQgBJAEwASQBUAFkALAAgAEkATgBDAEwAVQBEAEkATgBHAAoAQQBOAFkAIABHAEUATgBFAFIAQQBMACwAIABTAFAARQBDAEkAQQBMACwAIABJAE4ARABJAFIARQBDAFQALAAgAEkATgBDAEkARABFAE4AVABBAEwALAAgAE8AUgAgAEMATwBOAFMARQBRAFUARQBOAFQASQBBAEwAIABEAEEATQBBAEcARQBTACwACgBXAEgARQBUAEgARQBSACAASQBOACAAQQBOACAAQQBDAFQASQBPAE4AIABPAEYAIABDAE8ATgBUAFIAQQBDAFQALAAgAFQATwBSAFQAIABPAFIAIABPAFQASABFAFIAVwBJAFMARQAsACAAQQBSAEkAUwBJAE4ARwAgAEYAUgBPAE0ALAAgAE8AVQBUACAATwBGAAoAVABIAEUAIABVAFMARQAgAE8AUgAgAEkATgBBAEIASQBMAEkAVABZACAAVABPACAAVQBTAEUAIABUAEgARQAgAEYATwBOAFQAIABTAE8ARgBUAFcAQQBSAEUAIABPAFIAIABGAFIATwBNACAATwBUAEgARQBSACAARABFAEEATABJAE4ARwBTACAASQBOACAAVABIAEUACgBGAE8ATgBUACAAUwBPAEYAVABXAEEAUgBFAC4ACgAKAEUAeABjAGUAcAB0ACAAYQBzACAAYwBvAG4AdABhAGkAbgBlAGQAIABpAG4AIAB0AGgAaQBzACAAbgBvAHQAaQBjAGUALAAgAHQAaABlACAAbgBhAG0AZQBzACAAbwBmACAARwBuAG8AbQBlACwAIAB0AGgAZQAgAEcAbgBvAG0AZQAKAEYAbwB1AG4AZABhAHQAaQBvAG4ALAAgAGEAbgBkACAAQgBpAHQAcwB0AHIAZQBhAG0AIABJAG4AYwAuACwAIABzAGgAYQBsAGwAIABuAG8AdAAgAGIAZQAgAHUAcwBlAGQAIABpAG4AIABhAGQAdgBlAHIAdABpAHMAaQBuAGcAIABvAHIACgBvAHQAaABlAHIAdwBpAHMAZQAgAHQAbwAgAHAAcgBvAG0AbwB0AGUAIAB0AGgAZQAgAHMAYQBsAGUALAAgAHUAcwBlACAAbwByACAAbwB0AGgAZQByACAAZABlAGEAbABpAG4AZwBzACAAaQBuACAAdABoAGkAcwAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUACgB3AGkAdABoAG8AdQB0ACAAcAByAGkAbwByACAAdwByAGkAdAB0AGUAbgAgAGEAdQB0AGgAbwByAGkAegBhAHQAaQBvAG4AIABmAHIAbwBtACAAdABoAGUAIABHAG4AbwBtAGUAIABGAG8AdQBuAGQAYQB0AGkAbwBuACAAbwByACAAQgBpAHQAcwB0AHIAZQBhAG0ACgBJAG4AYwAuACwAIAByAGUAcwBwAGUAYwB0AGkAdgBlAGwAeQAuACAARgBvAHIAIABmAHUAcgB0AGgAZQByACAAaQBuAGYAbwByAG0AYQB0AGkAbwBuACwAIABjAG8AbgB0AGEAYwB0ADoAIABmAG8AbgB0AHMAIABhAHQAIABnAG4AbwBtAGUAIABkAG8AdAAKAG8AcgBnAC4AIAAKAAoAQQByAGUAdgAgAEYAbwBuAHQAcwAgAEMAbwBwAHkAcgBpAGcAaAB0AAoALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ACgAKAEMAbwBwAHkAcgBpAGcAaAB0ACAAKABjACkAIAAyADAAMAA2ACAAYgB5ACAAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgAKAAoAUABlAHIAbQBpAHMAcwBpAG8AbgAgAGkAcwAgAGgAZQByAGUAYgB5ACAAZwByAGEAbgB0AGUAZAAsACAAZgByAGUAZQAgAG8AZgAgAGMAaABhAHIAZwBlACwAIAB0AG8AIABhAG4AeQAgAHAAZQByAHMAbwBuACAAbwBiAHQAYQBpAG4AaQBuAGcACgBhACAAYwBvAHAAeQAgAG8AZgAgAHQAaABlACAAZgBvAG4AdABzACAAYQBjAGMAbwBtAHAAYQBuAHkAaQBuAGcAIAB0AGgAaQBzACAAbABpAGMAZQBuAHMAZQAgACgAIgBGAG8AbgB0AHMAIgApACAAYQBuAGQACgBhAHMAcwBvAGMAaQBhAHQAZQBkACAAZABvAGMAdQBtAGUAbgB0AGEAdABpAG8AbgAgAGYAaQBsAGUAcwAgACgAdABoAGUAIAAiAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIgApACwAIAB0AG8AIAByAGUAcAByAG8AZAB1AGMAZQAKAGEAbgBkACAAZABpAHMAdAByAGkAYgB1AHQAZQAgAHQAaABlACAAbQBvAGQAaQBmAGkAYwBhAHQAaQBvAG4AcwAgAHQAbwAgAHQAaABlACAAQgBpAHQAcwB0AHIAZQBhAG0AIABWAGUAcgBhACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAsAAoAaQBuAGMAbAB1AGQAaQBuAGcAIAB3AGkAdABoAG8AdQB0ACAAbABpAG0AaQB0AGEAdABpAG8AbgAgAHQAaABlACAAcgBpAGcAaAB0AHMAIAB0AG8AIAB1AHMAZQAsACAAYwBvAHAAeQAsACAAbQBlAHIAZwBlACwAIABwAHUAYgBsAGkAcwBoACwACgBkAGkAcwB0AHIAaQBiAHUAdABlACwAIABhAG4AZAAvAG8AcgAgAHMAZQBsAGwAIABjAG8AcABpAGUAcwAgAG8AZgAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAsACAAYQBuAGQAIAB0AG8AIABwAGUAcgBtAGkAdAAKAHAAZQByAHMAbwBuAHMAIAB0AG8AIAB3AGgAbwBtACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAaQBzACAAZgB1AHIAbgBpAHMAaABlAGQAIAB0AG8AIABkAG8AIABzAG8ALAAgAHMAdQBiAGoAZQBjAHQAIAB0AG8ACgB0AGgAZQAgAGYAbwBsAGwAbwB3AGkAbgBnACAAYwBvAG4AZABpAHQAaQBvAG4AcwA6AAoACgBUAGgAZQAgAGEAYgBvAHYAZQAgAGMAbwBwAHkAcgBpAGcAaAB0ACAAYQBuAGQAIAB0AHIAYQBkAGUAbQBhAHIAawAgAG4AbwB0AGkAYwBlAHMAIABhAG4AZAAgAHQAaABpAHMAIABwAGUAcgBtAGkAcwBzAGkAbwBuACAAbgBvAHQAaQBjAGUACgBzAGgAYQBsAGwAIABiAGUAIABpAG4AYwBsAHUAZABlAGQAIABpAG4AIABhAGwAbAAgAGMAbwBwAGkAZQBzACAAbwBmACAAbwBuAGUAIABvAHIAIABtAG8AcgBlACAAbwBmACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlAAoAdAB5AHAAZQBmAGEAYwBlAHMALgAKAAoAVABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAbQBhAHkAIABiAGUAIABtAG8AZABpAGYAaQBlAGQALAAgAGEAbAB0AGUAcgBlAGQALAAgAG8AcgAgAGEAZABkAGUAZAAgAHQAbwAsACAAYQBuAGQAIABpAG4ACgBwAGEAcgB0AGkAYwB1AGwAYQByACAAdABoAGUAIABkAGUAcwBpAGcAbgBzACAAbwBmACAAZwBsAHkAcABoAHMAIABvAHIAIABjAGgAYQByAGEAYwB0AGUAcgBzACAAaQBuACAAdABoAGUAIABGAG8AbgB0AHMAIABtAGEAeQAgAGIAZQAKAG0AbwBkAGkAZgBpAGUAZAAgAGEAbgBkACAAYQBkAGQAaQB0AGkAbwBuAGEAbAAgAGcAbAB5AHAAaABzACAAbwByACAAYwBoAGEAcgBhAGMAdABlAHIAcwAgAG0AYQB5ACAAYgBlACAAYQBkAGQAZQBkACAAdABvACAAdABoAGUACgBGAG8AbgB0AHMALAAgAG8AbgBsAHkAIABpAGYAIAB0AGgAZQAgAGYAbwBuAHQAcwAgAGEAcgBlACAAcgBlAG4AYQBtAGUAZAAgAHQAbwAgAG4AYQBtAGUAcwAgAG4AbwB0ACAAYwBvAG4AdABhAGkAbgBpAG4AZwAgAGUAaQB0AGgAZQByAAoAdABoAGUAIAB3AG8AcgBkAHMAIAAiAFQAYQB2AG0AagBvAG4AZwAgAEIAYQBoACIAIABvAHIAIAB0AGgAZQAgAHcAbwByAGQAIAAiAEEAcgBlAHYAIgAuAAoACgBUAGgAaQBzACAATABpAGMAZQBuAHMAZQAgAGIAZQBjAG8AbQBlAHMAIABuAHUAbABsACAAYQBuAGQAIAB2AG8AaQBkACAAdABvACAAdABoAGUAIABlAHgAdABlAG4AdAAgAGEAcABwAGwAaQBjAGEAYgBsAGUAIAB0AG8AIABGAG8AbgB0AHMACgBvAHIAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAdABoAGEAdAAgAGgAYQBzACAAYgBlAGUAbgAgAG0AbwBkAGkAZgBpAGUAZAAgAGEAbgBkACAAaQBzACAAZABpAHMAdAByAGkAYgB1AHQAZQBkACAAdQBuAGQAZQByACAAdABoAGUAIAAKACIAVABhAHYAbQBqAG8AbgBnACAAQgBhAGgAIABBAHIAZQB2ACIAIABuAGEAbQBlAHMALgAKAAoAVABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAbQBhAHkAIABiAGUAIABzAG8AbABkACAAYQBzACAAcABhAHIAdAAgAG8AZgAgAGEAIABsAGEAcgBnAGUAcgAgAHMAbwBmAHQAdwBhAHIAZQAgAHAAYQBjAGsAYQBnAGUAIABiAHUAdAAKAG4AbwAgAGMAbwBwAHkAIABvAGYAIABvAG4AZQAgAG8AcgAgAG0AbwByAGUAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB0AHkAcABlAGYAYQBjAGUAcwAgAG0AYQB5ACAAYgBlACAAcwBvAGwAZAAgAGIAeQAKAGkAdABzAGUAbABmAC4ACgAKAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAgAEkAUwAgAFAAUgBPAFYASQBEAEUARAAgACIAQQBTACAASQBTACIALAAgAFcASQBUAEgATwBVAFQAIABXAEEAUgBSAEEATgBUAFkAIABPAEYAIABBAE4AWQAgAEsASQBOAEQALAAKAEUAWABQAFIARQBTAFMAIABPAFIAIABJAE0AUABMAEkARQBEACwAIABJAE4AQwBMAFUARABJAE4ARwAgAEIAVQBUACAATgBPAFQAIABMAEkATQBJAFQARQBEACAAVABPACAAQQBOAFkAIABXAEEAUgBSAEEATgBUAEkARQBTACAATwBGAAoATQBFAFIAQwBIAEEATgBUAEEAQgBJAEwASQBUAFkALAAgAEYASQBUAE4ARQBTAFMAIABGAE8AUgAgAEEAIABQAEEAUgBUAEkAQwBVAEwAQQBSACAAUABVAFIAUABPAFMARQAgAEEATgBEACAATgBPAE4ASQBOAEYAUgBJAE4ARwBFAE0ARQBOAFQACgBPAEYAIABDAE8AUABZAFIASQBHAEgAVAAsACAAUABBAFQARQBOAFQALAAgAFQAUgBBAEQARQBNAEEAUgBLACwAIABPAFIAIABPAFQASABFAFIAIABSAEkARwBIAFQALgAgAEkATgAgAE4ATwAgAEUAVgBFAE4AVAAgAFMASABBAEwATAAKAFQAQQBWAE0ASgBPAE4ARwAgAEIAQQBIACAAQgBFACAATABJAEEAQgBMAEUAIABGAE8AUgAgAEEATgBZACAAQwBMAEEASQBNACwAIABEAEEATQBBAEcARQBTACAATwBSACAATwBUAEgARQBSACAATABJAEEAQgBJAEwASQBUAFkALAAKAEkATgBDAEwAVQBEAEkATgBHACAAQQBOAFkAIABHAEUATgBFAFIAQQBMACwAIABTAFAARQBDAEkAQQBMACwAIABJAE4ARABJAFIARQBDAFQALAAgAEkATgBDAEkARABFAE4AVABBAEwALAAgAE8AUgAgAEMATwBOAFMARQBRAFUARQBOAFQASQBBAEwACgBEAEEATQBBAEcARQBTACwAIABXAEgARQBUAEgARQBSACAASQBOACAAQQBOACAAQQBDAFQASQBPAE4AIABPAEYAIABDAE8ATgBUAFIAQQBDAFQALAAgAFQATwBSAFQAIABPAFIAIABPAFQASABFAFIAVwBJAFMARQAsACAAQQBSAEkAUwBJAE4ARwAKAEYAUgBPAE0ALAAgAE8AVQBUACAATwBGACAAVABIAEUAIABVAFMARQAgAE8AUgAgAEkATgBBAEIASQBMAEkAVABZACAAVABPACAAVQBTAEUAIABUAEgARQAgAEYATwBOAFQAIABTAE8ARgBUAFcAQQBSAEUAIABPAFIAIABGAFIATwBNAAoATwBUAEgARQBSACAARABFAEEATABJAE4ARwBTACAASQBOACAAVABIAEUAIABGAE8ATgBUACAAUwBPAEYAVABXAEEAUgBFAC4ACgAKAEUAeABjAGUAcAB0ACAAYQBzACAAYwBvAG4AdABhAGkAbgBlAGQAIABpAG4AIAB0AGgAaQBzACAAbgBvAHQAaQBjAGUALAAgAHQAaABlACAAbgBhAG0AZQAgAG8AZgAgAFQAYQB2AG0AagBvAG4AZwAgAEIAYQBoACAAcwBoAGEAbABsACAAbgBvAHQACgBiAGUAIAB1AHMAZQBkACAAaQBuACAAYQBkAHYAZQByAHQAaQBzAGkAbgBnACAAbwByACAAbwB0AGgAZQByAHcAaQBzAGUAIAB0AG8AIABwAHIAbwBtAG8AdABlACAAdABoAGUAIABzAGEAbABlACwAIAB1AHMAZQAgAG8AcgAgAG8AdABoAGUAcgAKAGQAZQBhAGwAaQBuAGcAcwAgAGkAbgAgAHQAaABpAHMAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAdwBpAHQAaABvAHUAdAAgAHAAcgBpAG8AcgAgAHcAcgBpAHQAdABlAG4AIABhAHUAdABoAG8AcgBpAHoAYQB0AGkAbwBuAAoAZgByAG8AbQAgAFQAYQB2AG0AagBvAG4AZwAgAEIAYQBoAC4AIABGAG8AcgAgAGYAdQByAHQAaABlAHIAIABpAG4AZgBvAHIAbQBhAHQAaQBvAG4ALAAgAGMAbwBuAHQAYQBjAHQAOgAgAHQAYQB2AG0AagBvAG4AZwAgAEAAIABmAHIAZQBlAAoALgAgAGYAcgAuAGgAdAB0AHAAOgAvAC8AZABlAGoAYQB2AHUALgBzAG8AdQByAGMAZQBmAG8AcgBnAGUALgBuAGUAdAAvAHcAaQBrAGkALwBpAG4AZABlAHgALgBwAGgAcAAvAEwAaQBjAGUAbgBzAGUARABlAGoAYQBWAHUAIABTAGEAbgBzAEMAbwBuAGQAZQBuAHMAZQBkACAAQgBvAGwAZAADAAAAAAAA/9gAWgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAIAAL//wADAAEAAAAMAAAAAAAAAAIABAABAF8AAQBhAGIAAQBkAHYAAQB5AIMAAQABAAAACgAcAB4AAURGTFQACAAEAAAAAP//AAAAAAAAAAEAAAAKAJIAlAAUREZMVAB6YXJhYgCEYXJtbgCEYnJhaQCEY2FucwCEY2hlcgCEY3lybACEZ2VvcgCEZ3JlawCEaGFuaQCEaGVicgCEa2FuYQCEbGFvIACEbGF0bgCEbWF0aACEbmtvIACEb2dhbQCEcnVucgCEdGZuZwCEdGhhaQCEAAQAAAAA//8AAAAAAAAAAAAAAAA=", "cmap": {"32": 1, "33": 2, "34": 3, "35": 4, "36": 5, "37": 6, "38": 7, "39": 8, "40": 9, "41": 10, "42": 11, "43": 12, "44": 13, "45": 14, "46": 15, "47": 16, "48": 17, "49": 18, "50": 19, "51": 20, "52": 21, "53": 22, "54": 23, "55": 24, "56": 25, "57": 26, "58": 27, "59": 28, "60": 29, "61": 30, "62": 31, "63": 32, "64": 33, "65": 34, "66": 35, "67": 36, "68": 37, "69": 38, "70": 39, "71": 40, "72": 41, "73": 42, "74": 43, "75": 44, "76": 45, "77": 46, "78": 47, "79": 48, "80": 49, "81": 50, "82": 51, "83": 52, "84": 53, "85": 54, "86": 55, "87": 56, "88": 57, "89": 58, "90": 59, "91": 60, "92": 61, "93": 62, "94": 63, "95": 64, "96": 65, "97": 66, "98": 67, "99": 68, "100": 69, "101": 70, "102": 71, "103": 72, "104": 73, "105": 74, "106": 75, "107": 76, "108": 77, "109": 78, "110": 79, "111": 80, "112": 81, "113": 82, "114": 83, "115": 84, "116": 85, "117": 86, "118": 87, "119": 88, "120": 89, "121": 90, "122": 91, "123": 92, "124": 93, "125": 94, "126": 95, "178": 97, "183": 98, "194": 100, "199": 101, "206": 102, "214": 103, "215": 104, "219": 105, "220": 106, "226": 107, "231": 108, "238": 109, "246": 110, "251": 111, "252": 112, "286": 113, "287": 114, "304": 115, "305": 116, "350": 117, "351": 118, "8211": 121, "8212": 122, "8216": 123, "8217": 124, "8220": 125, "8221": 126, "8226": 127, "8230": 128, "8594": 129, "8776": 130, "10003": 131}, "w": {"1": 313, "2": 410, "3": 469, "4": 754, "5": 626, "6": 901, "7": 785, "8": 275, "9": 411, "10": 411, "11": 470, "12": 754, "13": 342, "14": 374, "15": 342, "16": 329, "17": 626, "18": 626, "19": 626, "20": 626, "21": 626, "22": 626, "23": 626, "24": 626, "25": 626, "26": 626, "27": 360, "28": 360, "29": 754, "30": 754, "31": 754, "32": 522, "33": 900, "34": 696, "35": 686, "36": 660, "37": 747, "38": 615, "39": 615, "40": 738, "41": 753, "42": 334, "43": 334, "44": 697, "45": 573, "46": 896, "47": 753, "48": 765, "49": 659, "50": 765, "51": 693, "52": 648, "53": 614, "54": 730, "55": 696, "56": 993, "57": 694, "58": 651, "59": 652, "60": 411, "61": 329, "62": 411, "63": 754, "64": 450, "65": 450, "66": 607, "67": 644, "68": 533, "69": 644, "70": 610, "71": 391, "72": 644, "73": 641, "74": 308, "75": 308, "76": 598, "77": 308, "78": 938, "79": 641, "80": 618, "81": 644, "82": 644, "83": 444, "84": 536, "85": 430, "86": 641, "87": 586, "88": 831, "89": 580, "90": 586, "91": 523, "92": 641, "93": 329, "94": 641, "95": 754, "97": 394, "98": 342, "100": 696, "101": 660, "102": 334, "103": 765, "104": 754, "105": 730, "106": 730, "107": 607, "108": 533, "109": 308, "110": 618, "111": 641, "112": 641, "113": 738, "114": 644, "115": 334, "116": 308, "117": 648, "118": 536, "121": 450, "122": 900, "123": 342, "124": 342, "125": 591, "126": 591, "127": 575, "128": 900, "129": 754, "130": 754, "131": 754}, "asc": 928, "desc": -236, "bbox": [-962, -415, 1778, 1175], "name": "DejaVuSansCondensed-Bold"}};
+// ===== Küçük PDF yazıcı (A4, gömülü Türkçe font, kütüphane gerektirmez) =====
+class MiniPDF {
+  constructor(fonts) {
+    this.fonts = fonts; // {R:{b64,cmap,w,asc,desc,bbox,name}, B:{...}}
+    this.W = 595.28; this.H = 841.89;
+    this.pages = [];
+    this.used = { R: new Set(), B: new Set() };
+    this.addPage();
+  }
+  static mm(v) { return v * 72 / 25.4; }
+  addPage() { this.cur = []; this.pages.push(this.cur); }
+  _rgb(c) { if (!c) return [0,0,0]; const h = c.replace('#',''); return [0,2,4].map(i => (parseInt(h.substr(i,2),16)/255).toFixed(3)); }
+  _gid(f, ch) { const F = this.fonts[f]; const cp = ch.codePointAt(0); const g = F.cmap[cp] ?? F.cmap[63] ?? 0; this.used[f].add(g); return g; }
+  width(str, f, size) {
+    const F = this.fonts[f]; let w = 0;
+    String(str).split('').forEach(ch => { const g = F.cmap[ch.codePointAt(0)] ?? F.cmap[63]; w += (F.w[g] ?? 500); });
+    return w * size / 1000 * 25.4 / 72; // mm
+  }
+  // x,y mm, y = metnin taban çizgisi (üstten)
+  text(str, x, y, o = {}) {
+    const f = o.bold ? 'B' : 'R', size = o.size || 10;
+    str = String(str ?? '');
+    let xx = x;
+    if (o.align === 'right') xx = x - this.width(str, f, size);
+    if (o.align === 'center') xx = x - this.width(str, f, size) / 2;
+    let hex = '';
+    str.split('').forEach(ch => { hex += this._gid(f, ch).toString(16).padStart(4, '0'); });
+    const [r,g,b] = this._rgb(o.color || '#1D282C');
+    this.cur.push(`BT ${r} ${g} ${b} rg /F${f} ${size} Tf ${MiniPDF.mm(xx).toFixed(2)} ${(this.H - MiniPDF.mm(y)).toFixed(2)} Td <${hex}> Tj ET`);
+  }
+  // metni genişliğe göre satırlara böler
+  wrap(str, maxW, o = {}) {
+    const f = o.bold ? 'B' : 'R', size = o.size || 10;
+    const words = String(str ?? '').split(/\s+/); const lines = []; let line = '';
+    for (let w_idx = 0; w_idx < words.length; w_idx++) { const w = words[w_idx];
+      const t = line ? line + ' ' + w : w;
+      if (this.width(t, f, size) <= maxW || !line) line = t; else { lines.push(line); line = w; }
+    }
+    if (line) lines.push(line);
+    return lines.length ? lines : [''];
+  }
+  rect(x, y, w, h, o = {}) {
+    const X = MiniPDF.mm(x), Y = this.H - MiniPDF.mm(y + h), W = MiniPDF.mm(w), Hh = MiniPDF.mm(h);
+    let s = 'q ';
+    if (o.fill) { const [r,g,b] = this._rgb(o.fill); s += `${r} ${g} ${b} rg `; }
+    if (o.stroke) { const [r,g,b] = this._rgb(o.stroke); s += `${r} ${g} ${b} RG ${(o.lw || 0.5)} w `; if (o.dash) s += '[2 2] 0 d '; }
+    s += `${X.toFixed(2)} ${Y.toFixed(2)} ${W.toFixed(2)} ${Hh.toFixed(2)} re ` + (o.fill && o.stroke ? 'B' : o.fill ? 'f' : 'S') + ' Q';
+    this.cur.push(s);
+  }
+  line(x1, y1, x2, y2, o = {}) {
+    const [r,g,b] = this._rgb(o.color || '#1D282C');
+    this.cur.push(`q ${r} ${g} ${b} RG ${o.lw || 0.5} w ${MiniPDF.mm(x1).toFixed(2)} ${(this.H-MiniPDF.mm(y1)).toFixed(2)} m ${MiniPDF.mm(x2).toFixed(2)} ${(this.H-MiniPDF.mm(y2)).toFixed(2)} l S Q`);
+  }
+  output() {
+    const enc = new TextEncoder();
+    const chunks = []; let len = 0; const offs = [];
+    const push = (s) => { const b = typeof s === 'string' ? latin1(s) : s; chunks.push(b); len += b.length; };
+    function latin1(s) { const a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i) & 255; return a; }
+    const objs = []; // index -> string|Uint8Array parts
+    const add = (v) => { objs.push(v); return objs.length; };
+    const fontIds = {};
+    for (let f_idx = 0; f_idx < 2; f_idx++) { const f = ['R','B'][f_idx];
+      const F = this.fonts[f];
+      const bin = Uint8Array.from(atob(F.b64), c => c.charCodeAt(0));
+      const ff = add([`<< /Length ${bin.length} /Length1 ${bin.length} >>\nstream\n`, bin, `\nendstream`]);
+      const fd = add(`<< /Type /FontDescriptor /FontName /${F.name} /Flags 32 /FontBBox [${F.bbox.join(' ')}] /ItalicAngle 0 /Ascent ${F.asc} /Descent ${F.desc} /CapHeight ${F.asc} /StemV 80 /FontFile2 ${ff} 0 R >>`);
+      const gids = Object.keys(F.w).map(Number).sort((a,b)=>a-b);
+      const W = gids.map(g => `${g} [${F.w[g]}]`).join(' ');
+      const cid = add(`<< /Type /Font /Subtype /CIDFontType2 /BaseFont /${F.name} /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ${fd} 0 R /W [${W}] /CIDToGIDMap /Identity /DW 500 >>`);
+      const inv = Object.entries(F.cmap).map(([cp, g]) => [g, +cp]);
+      const bf = inv.map(([g, cp]) => `<${g.toString(16).padStart(4,'0')}> <${cp.toString(16).padStart(4,'0')}>`);
+      let cm = `/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /Adobe-Identity-UCS def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange\n`;
+      for (let i = 0; i < bf.length; i += 100) { const part = bf.slice(i, i + 100); cm += `${part.length} beginbfchar\n${part.join('\n')}\nendbfchar\n`; }
+      cm += `endcmap CMapName currentdict /CMap defineresource pop end end`;
+      const tu = add(`<< /Length ${cm.length} >>\nstream\n${cm}\nendstream`);
+      fontIds[f] = add(`<< /Type /Font /Subtype /Type0 /BaseFont /${F.name} /Encoding /Identity-H /DescendantFonts [${cid} 0 R] /ToUnicode ${tu} 0 R >>`);
+    }
+    const pagesId = objs.length + 1 + this.pages.length * 2; // pages tree after page objs
+    const kids = [];
+    for (let p_idx = 0; p_idx < this.pages.length; p_idx++) { const p = this.pages[p_idx];
+      const body = utf8safe(p.join('\n'));
+      const cs = add(`<< /Length ${body.length} >>\nstream\n${body}\nendstream`);
+      kids.push(add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources << /Font << /FR ${fontIds.R} 0 R /FB ${fontIds.B} 0 R >> >> /Contents ${cs} 0 R >>`));
+    }
+    function utf8safe(s) { return s; } // içerik sadece ASCII (hex metin)
+    const pid = add(`<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${kids.length} >>`);
+    const cat = add(`<< /Type /Catalog /Pages ${pid} 0 R >>`);
+    push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    objs.forEach((o, i) => {
+      offs[i] = len;
+      push(`${i + 1} 0 obj\n`);
+      (Array.isArray(o) ? o : [o]).forEach(push);
+      push(`\nendobj\n`);
+    });
+    const xref = len;
+    let x = `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
+    offs.forEach(o => { x += String(o).padStart(10, '0') + ' 00000 n \n'; });
+    push(x + `trailer\n<< /Size ${objs.length + 1} /Root ${cat} 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    const out = new Uint8Array(len); let k = 0; chunks.forEach(c => { out.set(c, k); k += c.length; });
+    return out;
+  }
+}
+
+</script>
+<script>
+const DEFAULT_DATA = {"matrix":{"page":2,"numPages":11,"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03","02","01"],"rows":[{"refs":["3000","3001","3003"],"note":"","cables":[{"conn":"KN10.1-INTERFERENCE SUPPRESSOR.2","from":"KN10.1","to":"INTERFERENCE SUPPRESSOR.2","sec":"1.50","color":"BLUE"},{"conn":"KN10.2-INTERFERENCE SUPPRESSOR.1","from":"KN10.2","to":"INTERFERENCE SUPPRESSOR.1","sec":"1.50","color":"BROWN"}],"types":["55","53","52","44","43","38","32","22","20","19","18","14","13","12","11","10","09","08","06","05","04","03"]},{"refs":["3002","3004","3005","3006","3007"],"note":"","cables":[{"conn":"KN10.1-INTERFERENCE SUPPRESSOR.2","from":"KN10.1","to":"INTERFERENCE SUPPRESSOR.2","sec":"1.0","color":"RED"},{"conn":"KN10.2-INTERFERENCE SUPPRESSOR.1","from":"KN10.2","to":"INTERFERENCE SUPPRESSOR.1","sec":"1.0","color":"GRAY"}],"types":["54","51","50","49","48","47","46","45","42","41","40","39","37","36","35","34","3301","33","3101","31","30","29","28","27","26","25","24","23","21","17","16","15","07"]},{"refs":["3008"],"note":"","cables":[{"conn":"KN10.1-INTERFERENCE SUPPRESSOR.2","from":"KN10.1","to":"INTERFERENCE SUPPRESSOR.2","sec":"1.0","color":"RED"},{"conn":"INTERFERENCE SUPPRESSOR.2-KN2.2","from":"INTERFERENCE SUPPRESSOR.2","to":"KN2.2","sec":"0.75","color":"WHITE ORANGE"},{"conn":"KN10.2-INTERFERENCE SUPPRESSOR.1","from":"KN10.2","to":"INTERFERENCE SUPPRESSOR.1","sec":"1.50","color":"GRAY"}],"types":["1501"]},{"refs":["3101"],"note":"","cables":[{"conn":"KN7.1-DOOR LOCCK.1","from":"KN7.1","to":"DOOR LOCCK.1","sec":"1.00","color":"RED"},{"conn":"KN7.2-DOOR LOCCK.3","from":"KN7.2","to":"DOOR LOCCK.3","sec":"1.00","color":"ORANGE"},{"conn":"KN7.3-DOOR LOCCK.2","from":"KN7.3","to":"DOOR LOCCK.2","sec":"1.00","color":"GRAY"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["3200","3201","3202","3203","3204"],"note":"","cables":[{"conn":"KN11.4-KN2.1","from":"KN11.4","to":"KN2.1","sec":"1.00","color":"GRAY"},{"conn":"KN11.3-KN2.2","from":"KN11.3","to":"KN2.2","sec":"1.00","color":"GRAY"},{"conn":"KN11.2-HEATER.1","from":"KN11.2","to":"HEATER.1","sec":"1.00","color":"RED"},{"conn":"KN11.1-HEATER.2","from":"KN11.1","to":"HEATER.2","sec":"1.00","color":"RED"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["3205"],"note":"","cables":[{"conn":"KN11.3-KN2.1","from":"KN11.3","to":"KN2.1","sec":"1.00","color":"GRAY"},{"conn":"KN2.1-ISITICI.2","from":"KN2.1","to":"ISITICI.2","sec":"1.00","color":"RED"},{"conn":"KN11.1-HEATER.1","from":"KN11.1","to":"HEATER.1","sec":"1.00","color":"RED"}],"types":["1501"]},{"refs":["3302","3304","3307"],"note":"","cables":[{"conn":"KN9.11-PUMP.1","from":"KN9.11","to":"PUMP.1","sec":"0.35","color":"PURPELE"},{"conn":"POMPA.2-JET PUMP.2","from":"POMPA.2","to":"JET PUMP.2","sec":"0.35","color":"GREEN"},{"conn":"JET PUMP.2-KN9.1","from":"JET PUMP.2","to":"KN9.1","sec":"0.35","color":"GREEN"},{"conn":"KN9.10-JET POMPA.1","from":"KN9.10","to":"JET POMPA.1","sec":"0.35","color":"PINK"},{"conn":"KN9.9-PRE WASH VALVE VANA2.1","from":"KN9.9","to":"PRE WASH VALVE VANA2.1","sec":"0.25","color":"BLUE"},{"conn":"KN9.2-PRE WASH VALVE VANA2.3","from":"KN9.2","to":"PRE WASH VALVE VANA2.3","sec":"0.25","color":"BLUE"},{"conn":"KN9.8-MAIN WASH VALVE VALVE1.1","from":"KN9.8","to":"MAIN WASH VALVE VALVE1.1","sec":"0.25","color":"YELLOW"},{"conn":"KN9.3-MAIN WASH VALVE VALVE1.3","from":"KN9.3","to":"MAIN WASH VALVE VALVE1.3","sec":"0.25","color":"YELLOW"}],"types":["45","42","37","29","21","20","11","09","03"]},{"refs":["3303","3305","3306","3308","3314","3315"],"note":"","cables":[{"conn":"KN9.11-PUMP.1","from":"KN9.11","to":"PUMP.1","sec":"0.35","color":"PURPELE"},{"conn":"KN9.1-PUMP.2","from":"KN9.1","to":"PUMP.2","sec":"0.35","color":"GREEN"},{"conn":"KN9.9-PRE WASH VALVE VANA2.1","from":"KN9.9","to":"PRE WASH VALVE VANA2.1","sec":"0.25","color":"BLUE"},{"conn":"KN9.2-PRE WASH VALVE VANA2.3","from":"KN9.2","to":"PRE WASH VALVE VANA2.3","sec":"0.25","color":"BLUE"},{"conn":"KN9.8-MAIN WASH VALVE VALVE1.1","from":"KN9.8","to":"MAIN WASH VALVE VALVE1.1","sec":"0.25","color":"YELLOW"},{"conn":"KN9.3-MAIN WASH VALVE VALVE1.3","from":"KN9.3","to":"MAIN WASH VALVE VALVE1.3","sec":"0.25","color":"YELLOW"}],"types":["38","36","3301","33","32","3101","31","22","18","17","16","1501","15","13","12","10","08","07","06","05","04"]},{"refs":["3309"],"note":"","cables":[{"conn":"KN9.12-PUMP.1","from":"KN9.12","to":"PUMP.1","sec":"0.35","color":"PURPLE"},{"conn":"POMPA.2-JET PUMP.2","from":"POMPA.2","to":"JET PUMP.2","sec":"0.35","color":"GREEN"},{"conn":"JET PUMP.2-KN9.1","from":"JET PUMP.2","to":"KN9.1","sec":"0.35","color":"GREEN"},{"conn":"KN9.11-JET PUMP.1","from":"KN9.11","to":"JET PUMP.1","sec":"0.35","color":"PINK"},{"conn":"KN9.9-PRE WASH VALVE VALVE2.1","from":"KN9.9","to":"PRE WASH VALVE VALVE2.1","sec":"0.25","color":"BLUE"},{"conn":"KN9.2-PRE WASH VALVE VALVE2.3","from":"KN9.2","to":"PRE WASH VALVE VALVE2.3","sec":"0.25","color":"BLUE"},{"conn":"KN9.8-MAIN WASH VALVE VALVE1.1","from":"KN9.8","to":"MAIN WASH VALVE VALVE1.1","sec":"0.25","color":"YELLOW"},{"conn":"KN9.3-MAIN WASH VALVE VALVE1.3","from":"KN9.3","to":"MAIN WASH VALVE VALVE1.3","sec":"0.25","color":"YELLOW"}],"types":["55","51","49","48","47","46","19"]},{"refs":["3310","3311","3312","3313","3318"],"note":"","cables":[{"conn":"KN9.12-PUMP.1","from":"KN9.12","to":"PUMP.1","sec":"0.35","color":"PURPLE"},{"conn":"KN9.1-PUMP.2","from":"KN9.1","to":"PUMP.2","sec":"0.35","color":"GREEN"},{"conn":"KN9.9-PRE WASH VALVE VALVE2.1","from":"KN9.9","to":"PRE WASH VALVE VALVE2.1","sec":"0.25","color":"BLUE"},{"conn":"KN9.2-PRE WASH VALVE VALVE2.3","from":"KN9.2","to":"PRE WASH VALVE VALVE2.3","sec":"0.25","color":"BLUE"},{"conn":"KN9.8-MAIN WASH VALVE VALVE1.1","from":"KN9.8","to":"MAIN WASH VALVE VALVE1.1","sec":"0.25","color":"YELLOW"},{"conn":"KN9.3-MAIN WASH VALVE VALVE1.3","from":"KN9.3","to":"MAIN WASH VALVE VALVE1.3","sec":"0.25","color":"YELLOW"}],"types":["54","53","52","50","44","43","41","40","35","34","30","28","27","24","23","14"]},{"refs":["3316","3317"],"note":"","cables":[{"conn":"KN9.12-PUMP.1","from":"KN9.12","to":"PUMP.1","sec":"0.35","color":"PURPLE"},{"conn":"KN9.1-PUMP.2","from":"KN9.1","to":"PUMP.2","sec":"0.35","color":"GREEN"},{"conn":"KN9.9-PRE WASH VALVE VALVE2.1","from":"KN9.9","to":"PRE WASH VALVE VALVE2.1","sec":"0.25","color":"BLUE"},{"conn":"KN9.2-DETERGANT DOZAGE VALVE.1","from":"KN9.2","to":"DETERGANT DOZAGE VALVE.1","sec":"0.25","color":"RED"},{"conn":"DETERGANT DOZAGE VALVE.1-PRE WASH VALVE VALVE2.3","from":"DETERGANT DOZAGE VALVE.1","to":"PRE WASH VALVE VALVE2.3","sec":"0.25","color":"BLUE"},{"conn":"KN9.10-DETERGANT DOZAGE VALVE .2","from":"KN9.10","to":"DETERGANT DOZAGE VALVE .2","sec":"0.25","color":"RED"},{"conn":"KN9.8-MAIN WASH VALVE VALVE1.1","from":"KN9.8","to":"MAIN WASH VALVE VALVE1.1","sec":"0.25","color":"YELLOW"},{"conn":"KN9.3-MAIN WASH VALVE VALVE1.3","from":"KN9.3","to":"MAIN WASH VALVE VALVE1.3","sec":"0.25","color":"YELLOW"}],"types":["39","26","25"]},{"refs":["3401","3402","3403","3404","3405"],"note":"","cables":[{"conn":"KN4.8-NTC.1","from":"KN4.8","to":"NTC.1","sec":"0.25","color":"GREEN"},{"conn":"KN4.7-NTC.3","from":"KN4.7","to":"NTC.3","sec":"0.25","color":"GREEN"},{"conn":"KN4.6-WATER LAVEL SENSÖR.1","from":"KN4.6","to":"WATER LAVEL SENSÖR.1","sec":"0.25","color":"GRAY"},{"conn":"KN4.5-WATER LAVEL SENSÖR.3","from":"KN4.5","to":"WATER LAVEL SENSÖR.3","sec":"0.25","color":"ORANGE"},{"conn":"KN4.4-WATER LAVEL SENSÖR.2","from":"KN4.4","to":"WATER LAVEL SENSÖR.2","sec":"0.25","color":"PINK"},{"conn":"KN4.2-KN3.1","from":"KN4.2","to":"KN3.1","sec":"0.25","color":"YELLOW"},{"conn":"KN4.3-KN3.2","from":"KN4.3","to":"KN3.2","sec":"0.25","color":"BLUE"},{"conn":"KN4.1-KN3.3","from":"KN4.1","to":"KN3.3","sec":"0.25","color":"RED"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["3401","3402","3403","3404","3405"],"note":"IF THE 34xx MODULE IS PRINTED ON AN AUTOMATIC MACHINE","cables":[{"conn":"KN4.8-NTC.1","from":"KN4.8","to":"NTC.1","sec":"0.25","color":"GREEN"},{"conn":"KN4.7-NTC.3","from":"KN4.7","to":"NTC.3","sec":"0.25","color":"GREEN"},{"conn":"KN4.6-WATER LAVEL SENSÖR.1","from":"KN4.6","to":"WATER LAVEL SENSÖR.1","sec":"0.25","color":"GRAY"},{"conn":"KN4.5-WATER LAVEL SENSÖR.3","from":"KN4.5","to":"WATER LAVEL SENSÖR.3","sec":"0.25","color":"RED"},{"conn":"KN4.4-WATER LAVEL SENSÖR.2","from":"KN4.4","to":"WATER LAVEL SENSÖR.2","sec":"0.25","color":"PINK"},{"conn":"KN4.2-KN3.1","from":"KN4.2","to":"KN3.1","sec":"0.25","color":"YELLOW"},{"conn":"KN4.3-KN3.2","from":"KN4.3","to":"KN3.2","sec":"0.25","color":"BLUE"},{"conn":"KN4.1-KN3.3","from":"KN4.1","to":"KN3.3","sec":"0.25","color":"RED"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["3501","3518"],"note":"","cables":[{"conn":"KN5.6-FLOWMETER1.1","from":"KN5.6","to":"FLOWMETER1.1","sec":"0.25","color":"WHITE"},{"conn":"KN5.5-FLOWMETER1.3","from":"KN5.5","to":"FLOWMETER1.3","sec":"0.25","color":"WHITE"},{"conn":"KN5.4-DURUM LED.1","from":"KN5.4","to":"DURUM LED.1","sec":"0.35","color":"YELLOW"},{"conn":"KN5.3-DURUM LED.3","from":"KN5.3","to":"DURUM LED.3","sec":"0.35","color":"BLUE"}],"types":["55","46","26","19"]},{"refs":["3502"],"note":"","cables":[{"conn":"KN5.6-FLOWMETER2.1","from":"KN5.6","to":"FLOWMETER2.1","sec":"0.25","color":"RED"},{"conn":"KN5.5-FLOWMETER2.3","from":"KN5.5","to":"FLOWMETER2.3","sec":"0.25","color":"RED"},{"conn":"KN5.4-DURUM LED.1","from":"KN5.4","to":"DURUM LED.1","sec":"0.35","color":"YELLOW"},{"conn":"KN5.3-DURUM LED.3","from":"KN5.3","to":"DURUM LED.3","sec":"0.35","color":"BLUE"}],"types":["49"]},{"refs":["3504","3506","3509","3512"],"note":"","cables":[{"conn":"KN5.6-FLOWMETER1.1","from":"KN5.6","to":"FLOWMETER1.1","sec":"0.25","color":"WHITE"},{"conn":"KN5.5-FLOWMETER1.3","from":"KN5.5","to":"FLOWMETER1.3","sec":"0.25","color":"WHITE"},{"conn":"KN5.2-AQUASTOP.1","from":"KN5.2","to":"AQUASTOP.1","sec":"0.25","color":"GRAY"},{"conn":"KN5.1-AQUASTOP.5","from":"KN5.1","to":"AQUASTOP.5","sec":"0.25","color":"GRAY"}],"types":["53","25","10"]},{"refs":["3505","3507","3510","3513"],"note":"","cables":[{"conn":"KN5.6-FLOWMETER1.1","from":"KN5.6","to":"FLOWMETER1.1","sec":"0.25","color":"WHITE"},{"conn":"KN5.5-FLOWMETER1.3","from":"KN5.5","to":"FLOWMETER1.3","sec":"0.25","color":"WHITE"}],"types":["54","51","47","42","39","37","29","21","20","08","03"]},{"refs":["3515"],"note":"","cables":[{"conn":"KN5.6-FLOWMETER1.1","from":"KN5.6","to":"FLOWMETER1.1","sec":"0.25","color":"WHITE"},{"conn":"KN5.5-FLOWMETER1.3","from":"KN5.5","to":"FLOWMETER1.3","sec":"0.25","color":"WHITE"},{"conn":"KN5.4-FLOWMETER2.1","from":"KN5.4","to":"FLOWMETER2.1","sec":"0.25","color":"RED"},{"conn":"KN5.3-FLOWMETER2.3","from":"KN5.3","to":"FLOWMETER2.3","sec":"0.25","color":"RED"}],"types":["09"]},{"refs":["3516","3520"],"note":"","cables":[{"conn":"KN5.4-FLOWMETER2.1","from":"KN5.4","to":"FLOWMETER2.1","sec":"0.25","color":"RED"},{"conn":"KN5.3-FLOWMETER2.3","from":"KN5.3","to":"FLOWMETER2.3","sec":"0.25","color":"RED"}],"types":["48","45","11"]},{"refs":["3508","3511","3514","3517"],"note":"","cables":[{"conn":"KN5.2-AQUASTOP.1","from":"KN5.2","to":"AQUASTOP.1","sec":"0.25","color":"GRAY"},{"conn":"KN5.1-AQUASTOP.5","from":"KN5.1","to":"AQUASTOP.5","sec":"0.25","color":"GRAY"}],"types":["43","42","40","36","18","16","13","12"]},{"refs":["3519"],"note":"","cables":[{"conn":"KN5.4-DURUM LED.1","from":"KN5.4","to":"DURUM LED.1","sec":"0.35","color":"YELLOW"},{"conn":"KN5.3-DURUM LED.3","from":"KN5.3","to":"DURUM LED.3","sec":"0.35","color":"BLUE"}],"types":["44","41"]},{"refs":["3600","3601","3602"],"note":"","cables":[{"conn":"KN14.8-DETERGEN DOZAGE.1","from":"KN14.8","to":"DETERGEN DOZAGE.1","sec":"0.25","color":"BLUE"},{"conn":"KN14.7-DETERGEN DOZAGE.2","from":"KN14.7","to":"DETERGEN DOZAGE.2","sec":"0.25","color":"YELLOW"},{"conn":"KN14.5-DETERGEN DOZAGE.3","from":"KN14.5","to":"DETERGEN DOZAGE.3","sec":"0.25","color":"GREEN"},{"conn":"KN14.4-TURBLTY.2","from":"KN14.4","to":"TURBLTY.2","sec":"0.25","color":"WHITE"},{"conn":"KN14.3-TURBLTY.1","from":"KN14.3","to":"TURBLTY.1","sec":"0.25","color":"ORANGE"},{"conn":"KN14.2-TURBLTY.3","from":"KN14.2","to":"TURBLTY.3","sec":"0.25","color":"RED"},{"conn":"KN14.1-TURBLTY.4","from":"KN14.1","to":"TURBLTY.4","sec":"0.25","color":"PINK"},{"conn":"DETERGEN DOZAGE.5-KN9.4","from":"DETERGEN DOZAGE.5","to":"KN9.4","sec":"0.25","color":"RED"},{"conn":"DETERGEN DOZAGE.7-KN9.10","from":"DETERGEN DOZAGE.7","to":"KN9.10","sec":"0.25","color":"WHITE"},{"conn":"DETERGEN DOZAGE.8-KN9.7","from":"DETERGEN DOZAGE.8","to":"KN9.7","sec":"0.25","color":"GRAY"}],"types":["19"]},{"refs":["3603","3604"],"note":"","cables":[{"conn":"KN14.8-DETERGEN DOZAGE.1","from":"KN14.8","to":"DETERGEN DOZAGE.1","sec":"0.25","color":"BLACK"},{"conn":"KN14.7-DETERGEN DOZAGE.2","from":"KN14.7","to":"DETERGEN DOZAGE.2","sec":"0.25","color":"BLACK"},{"conn":"KN14.6-DETERGEN DOZAGE.3","from":"KN14.6","to":"DETERGEN DOZAGE.3","sec":"0.25","color":"GREEN"},{"conn":"KN14.5-DETERGEN DOZAGE.4","from":"KN14.5","to":"DETERGEN DOZAGE.4","sec":"0.25","color":"GREEN"},{"conn":"KN14.4-TURBLTY.2","from":"KN14.4","to":"TURBLTY.2","sec":"0.25","color":"WHITE"},{"conn":"KN14.3-TURBLTY.1","from":"KN14.3","to":"TURBLTY.1","sec":"0.25","color":"ORANGE"},{"conn":"KN14.2-TURBLTY.3","from":"KN14.2","to":"TURBLTY.3","sec":"0.25","color":"RED"},{"conn":"KN14.1-TURBLTY.4","from":"KN14.1","to":"TURBLTY.4","sec":"0.25","color":"PINK"},{"conn":"DETERGEN DOZAGE.6-KN9.4","from":"DETERGEN DOZAGE.6","to":"KN9.4","sec":"0.25","color":"WHITE"},{"conn":"DETERGEN DOZAGE.8-KN9.7","from":"DETERGEN DOZAGE.8","to":"KN9.7","sec":"0.25","color":"WHITE"}],"types":["39","26","25"]},{"refs":["3700","3701","3702"],"note":"","cables":[{"conn":"KN7.1-MOTOR LINE.3","from":"KN7.1","to":"MOTOR LINE.3","sec":"0.75","color":"RED-WHITE"},{"conn":"KN7.2-MOTOR LINE.2","from":"KN7.2","to":"MOTOR LINE.2","sec":"0.75","color":"GRAY-WHITE"},{"conn":"KN7.3-MOTOR LINE.1","from":"KN7.3","to":"MOTOR LINE.1","sec":"0.75","color":"WHITE-ORANGE"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["3800","3801"],"note":"","cables":[{"conn":"HEATER GND.-INPUT GND.","from":"HEATER GND.","to":"INPUT GND.","sec":"0.75","color":"GREEN-YELLOW"}],"types":["55","54","53","52","51","50","49","48","47","46","45","44","43","42","41","40","39","38","37","36","35","34","3301","33","32","3101","31","30","29","28","27","26","25","24","23","22","21","20","19","18","17","16","1501","15","14","13","12","11","10","09","08","07","06","05","04","03"]},{"refs":["4000"],"note":"","cables":[{"conn":"KN4.4-AQUATECH SENSOR.1","from":"KN4.4","to":"AQUATECH SENSOR.1","sec":"0.35","color":"GREEN"},{"conn":"KN4.2-AQUATECH SENSOR.3","from":"KN4.2","to":"AQUATECH SENSOR.3","sec":"0.35","color":"GREEN"}],"types":["55","19"]},{"refs":["4001"],"note":"","cables":[{"conn":"MK4.1-ACCELERATION SENSOR.2","from":"MK4.1","to":"ACCELERATION SENSOR.2","sec":"0.25","color":"WHITE"},{"conn":"MK4.2-ACCELERATION SENSOR.1","from":"MK4.2","to":"ACCELERATION SENSOR.1","sec":"0.25","color":"GRAY"},{"conn":"MK4.3-ACCELERATION SENSOR.4","from":"MK4.3","to":"ACCELERATION SENSOR.4","sec":"0.25","color":"RED"},{"conn":"MK4.4-ACCELERATION SENSOR.3","from":"MK4.4","to":"ACCELERATION SENSOR.3","sec":"0.25","color":"GREEN"}],"types":["50","35"]}]},"features":{"page":1,"names":["İVME SENSÖRÜ","STANDART DOZAGE","AQUATECH","DURUM LED","TURBLYTY","COMPETİTİVE DOZAGE","AQUASTOP","MİKRO FİBER FİLTRE + FLOWMETRE2","MİKRO FİBER FİLTRE + FLOWMETRE2 +Diverter valve","FLOWMETRE","JET"],"types":{"10":{"desc":"TEK_P50","features":["AQUASTOP","FLOWMETRE"]},"11":{"desc":"TEK_P54","features":["MİKRO FİBER FİLTRE + FLOWMETRE2","JET"]},"12":{"desc":"TEK_P54","features":["AQUASTOP"]},"13":{"desc":"TEK_P50","features":["AQUASTOP"]},"14":{"desc":"TEK_P60 WIFIGHTER","features":[]},"15":{"desc":"TEK_P54_1750 WATT","features":[]},"16":{"desc":"TEK_P54_1750 WATT","features":["AQUASTOP"]},"17":{"desc":"TEK_P60_1750 WATT","features":[]},"18":{"desc":"TEK_P60","features":["AQUASTOP"]},"19":{"desc":"TEK_P54 WIFIGHTER","features":["AQUATECH","DURUM LED","TURBLYTY","COMPETİTİVE DOZAGE","FLOWMETRE","JET"]},"20":{"desc":"TEK_P50","features":["FLOWMETRE","JET"]},"21":{"desc":"TEK_P60_1750 WATT","features":["FLOWMETRE","JET"]},"22":{"desc":"TEK_P40","features":[]},"23":{"desc":"TEK_P50_WIFIGHTER _1750 WATT","features":[]},"24":{"desc":"TEK_P45_WIFIGHTER _1750 WATT","features":[]},"25":{"desc":"TEK_P54 WIFIGHTER_1750 WATT","features":["STANDART DOZAGE","TURBLYTY","AQUASTOP","FLOWMETRE"]},"26":{"desc":"TEK_P60 WIFIGHTER__1750 WATT","features":["STANDART DOZAGE","DURUM LED","TURBLYTY","FLOWMETRE"]},"27":{"desc":"TEK_P40_WIFIGHTER","features":[]},"28":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":[]},"29":{"desc":"TEK_P54_1750 WATT","features":["FLOWMETRE","JET"]},"30":{"desc":"TEK_P60 WIFIGHTER_1750 WATT","features":[]},"31":{"desc":"TEK_P50 _1750 WATT","features":[]},"32":{"desc":"TEK_P48","features":[]},"33":{"desc":"TEK_P48 _1750 WATT","features":[]},"34":{"desc":"TEK_P48 WIFIGHTER _1750 WATT","features":[]},"35":{"desc":"TEK_P48 WIFIGHTER _1750 WATT","features":["İVME SENSÖRÜ"]},"36":{"desc":"TEK_P48 _1750 WATT","features":["AQUASTOP"]},"37":{"desc":"TEK_P48 _1750 WATT","features":["FLOWMETRE","JET"]},"38":{"desc":"TEK_P42_1750 WATT","features":[]},"39":{"desc":"TEK_P60 WIFIGHTER__1750 WATT","features":["STANDART DOZAGE","TURBLYTY","FLOWMETRE"]},"40":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["AQUASTOP"]},"41":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["DURUM LED"]},"42":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["AQUASTOP","FLOWMETRE","JET"]},"43":{"desc":"TEK_P50 WIFIGHTER _1750 WATT","features":["AQUASTOP"]},"44":{"desc":"TEK_P60 WIFIGHTER","features":["DURUM LED"]},"45":{"desc":"TEK_P48 WIFIGHTER _1750 WATT","features":["MİKRO FİBER FİLTRE + FLOWMETRE2","JET"]},"46":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["DURUM LED","FLOWMETRE","JET"]},"47":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["FLOWMETRE","JET"]},"48":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["MİKRO FİBER FİLTRE + FLOWMETRE2","JET"]},"49":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["DURUM LED","MİKRO FİBER FİLTRE + FLOWMETRE2","JET"]},"50":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["İVME SENSÖRÜ"]},"51":{"desc":"TEK_P60 WIFIGHTER_1750 WATT","features":["FLOWMETRE","JET"]},"52":{"desc":"TEK_P42 WIFIGHTER_1750 WATT","features":[]},"53":{"desc":"TEK_P50 WIFIGHTER _1750 WATT","features":["AQUASTOP","FLOWMETRE"]},"54":{"desc":"TEK_P54 WIFIGHTER _1750 WATT","features":["FLOWMETRE"]},"55":{"desc":"TEK_P54 WIFIGHTER","features":["AQUATECH","DURUM LED","FLOWMETRE","JET"]},"3101":{"desc":"TEK_P50 _1750 WATT_ALTS","features":[]},"3301":{"desc":"TEK_P48 _1750 WATT_ALTS","features":[]},"09":{"desc":"TEK_P54","features":["MİKRO FİBER FİLTRE + FLOWMETRE2","FLOWMETRE","JET"]},"08":{"desc":"TEK_P50","features":["FLOWMETRE"]},"07":{"desc":"TEK_P45","features":[]},"06":{"desc":"TEK_P60","features":[]},"05":{"desc":"TEK_P50","features":[]},"04":{"desc":"TEK_P54","features":[]},"03":{"desc":"TEK_P54","features":["FLOWMETRE","JET"]},"02":{"desc":"TEK_P54_IPTAL","features":[]},"01":{"desc":"TEK_P54_IPTAL","features":["FLOWMETRE","JET"]}}},"drawings":{"10":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"11":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"12":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"13":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"14":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"15":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"16":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"17":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"18":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"19":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"20":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"21":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"22":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":8,"sheet":"8/10","kind":"Montaj resmi"}],"23":[{"page":4,"sheet":"4/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"24":[{"page":6,"sheet":"6/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"25":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"26":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"27":[{"page":7,"sheet":"7/10","kind":"Elektrik şeması"},{"page":8,"sheet":"8/10","kind":"Montaj resmi"}],"28":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"29":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"30":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"31":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"32":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"33":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"34":[{"page":7,"sheet":"7/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"35":[{"page":7,"sheet":"7/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"36":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"37":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"38":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":11,"sheet":"8/10","kind":"Montaj resmi"}],"39":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"40":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"41":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"42":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"43":[{"page":4,"sheet":"4/10","kind":"Montaj resmi"},{"page":7,"sheet":"7/10","kind":"Elektrik şeması"}],"44":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"45":[{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"46":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"47":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"48":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"49":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"50":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"51":[{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"52":[{"page":11,"sheet":"8/10","kind":"Montaj resmi"}],"53":[{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"54":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"55":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"}],"1501":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":9,"sheet":"9/10","kind":"Elektrik şeması"}],"3101":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"3301":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":10,"sheet":"10/10","kind":"Montaj resmi"}],"03":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"04":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"09":[{"page":1,"sheet":"1/10","kind":"Montaj resmi"},{"page":3,"sheet":"3/10","kind":"Elektrik şeması"}],"05":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}],"06":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":5,"sheet":"5/10","kind":"Montaj resmi"}],"07":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":6,"sheet":"6/10","kind":"Montaj resmi"}],"08":[{"page":3,"sheet":"3/10","kind":"Elektrik şeması"},{"page":4,"sheet":"4/10","kind":"Montaj resmi"}]},"meta":{"docNo":"D-145540xx00 / BF","rev":"BF","title":"ANA KABLO GR.(D7S_MONOBORD)"}};
+const PDFJS_VER = "3.11.174";
+const STORE_KEY = "kablo-tip-asistani:v1";
+
+let DATA = DEFAULT_DATA, custom = false;
+try { const s = localStorage.getItem(STORE_KEY); if (s) { const d = JSON.parse(s); if (d && d.matrix) { DATA = d; custom = true; } } } catch (e) {}
+
+let state = { mode: "sum", a: null, b: null, simN: 5 };
+
+/* ---------- yardımcılar ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const sortKey = (t) => t.length === 4 ? parseFloat(t.slice(0,2) + "." + t.slice(2)) : parseFloat(t);
+function allTypes() {
+  const s = new Set();
+  if (DATA && DATA.matrix && DATA.matrix.types) {
+    DATA.matrix.types.forEach(t => s.add(t));
+  }
+  if (DATA && DATA.features && DATA.features.types) {
+    Object.keys(DATA.features.types).forEach(t => s.add(t));
+  }
+  const arr = [];
+  s.forEach(v => arr.push(v));
+  return arr.sort((x, y) => sortKey(x) - sortKey(y));
+}
+function normType(raw) {
+  const d = String(raw).replace(/\D/g, "");
+  if (!d) return null;
+  const all = allTypes();
+  if (all.includes(d)) return d;
+  if (d.length === 1 && all.includes("0" + d)) return "0" + d;
+  return null;
+}
+const rowsFor = (t) => DATA.matrix.rows.filter(r => r.types.includes(t));
+const typeInfo = (t) => (DATA.features && DATA.features.types[t]) || { desc: "", features: [] };
+
+const COLORS = { RED:["#C62828","Kırmızı"], BLUE:["#1F5FBF","Mavi"], BROWN:["#6D4C2F","Kahverengi"], GRAY:["#8E959A","Gri"], GREY:["#8E959A","Gri"],
+  ORANGE:["#E8761E","Turuncu"], WHITE:["#F4F4EE","Beyaz"], YELLOW:["#F2C318","Sarı"], GREEN:["#2E8B3A","Yeşil"], PINK:["#E86FA8","Pembe"],
+  PURPLE:["#7B3FA0","Mor"], PURPELE:["#7B3FA0","Mor"], BLACK:["#1A1A1A","Siyah"] };
+function colorParts(c) { return String(c).toUpperCase().split(/[^A-Z]+/).filter(w => COLORS[w]); }
+function colorName(c) { const p = colorParts(c); return p.length ? p.map(w => COLORS[w][1]).join("-") : c; }
+function wireStyle(c, sec) {
+  const p = colorParts(c);
+  const h = { "0.25":4, "0.35":5, "0.5":6, "0.50":6, "0.75":7, "1.0":9, "1.00":9, "1.5":11, "1.50":11 }[sec] || Math.max(4, Math.round(parseFloat(sec) * 7));
+  let bg = "#999";
+  if (p.length === 1) bg = COLORS[p[0]][0];
+  else if (p.length >= 2) { const x = COLORS[p[0]][0], y = COLORS[p[1]][0]; bg = `repeating-linear-gradient(115deg, ${x} 0 9px, ${y} 9px 13px)`; }
+  const border = p.includes("WHITE") ? "outline:1px solid var(--rule);" : "";
+  return `--h:${h}px;background:${bg};${border}`;
+}
+const GROUP_KEYS = [
+  [/GND/, "Topraklama"], [/INTERFERENCE/, "Parazit filtresi"], [/DOOR LOC/, "Emniyet kilidi"], [/HEATER|ISITICI/, "Isıtıcı"],
+  [/JET/, "Jet pompa"], [/PUMP|POMPA/, "Pompa"], [/DOZAGE VALVE|DOZAJ VAN/, "Deterjan dozaj vanası"], [/VALVE|VANA/, "Vanalar"],
+  [/NTC/, "NTC"], [/WATER L/, "Su seviye sensörü"], [/FLOWMETER ?1/, "Flowmetre 1"], [/FLOWMETER ?2/, "Flowmetre 2"],
+  [/DURUM LED/, "Durum LED"], [/AQUASTOP/, "Aquastop"], [/DETERGEN DOZAGE/, "Deterjan dozaj"], [/TURBLTY|TURBID/, "Türbidite"],
+  [/MOTOR LINE/, "Motor hattı"], [/AQUATECH/, "Aquatech sensör"], [/ACCELERATION/, "İvme sensörü"]
+];
+function groupName(r) {
+  const names = [];
+  for (let c_idx = 0; c_idx < r.cables.length; c_idx++) {
+    const c = r.cables[c_idx];
+    const s = (c.from + " " + c.to).toUpperCase();
+    for (let k = 0; k < GROUP_KEYS.length; k++) {
+      const re = GROUP_KEYS[k][0], n = GROUP_KEYS[k][1];
+      if (re.test(s)) { if (!names.includes(n)) names.push(n); if (n !== "Pompa" && n !== "Vanalar") break; }
+    }
+  }
+  const clean = names.filter(n => !(n === "Pompa" && names.includes("Jet pompa") && false));
+  return clean.length ? clean.join(" + ") : "Kablo grubu";
+}
+const altText = (r) => r.note ? (/AUTOMATIC/i.test(r.note) ? "Alternatif: 34xx modülü otomatik makinede basılıyorsa bu set kullanılır." : r.note) : "";
+const refLabel = (r) => r.refs.length ? r.refs.join(", ") : "–";
+const normName = (x) => x.toUpperCase().replace(/VANA/g, "VALVE").replace(/POMPA/g, "PUMP").replace(/LOCCK/g, "LOCK").replace(/ISITICI/g, "HEATER").replace(/\s+/g, "");
+const cableKey = (r, c) => normName(c.from) + ">" + normName(c.to) + (r.note ? "#alt" : "");
+function cableRow(c, extra = "") {
+  return `<tr${extra}><td class="wirecell"><span class="wire" style="${wireStyle(c.color, c.sec)}" aria-hidden="true"></span></td>
+    <td class="conn">${esc(c.from)}<span class="arr">→</span>${esc(c.to)}</td>
+    <td class="num">${esc(c.sec)} mm²</td><td class="colorname">${esc(colorName(c.color))}</td></tr>`;
+}
+function drawingsFor(t) {
+  const L = (DATA.drawings && DATA.drawings[t]) || [];
+  if (!L.length) return "";
+  return L.map(d => `${esc(d.kind)}: <b>PDF sayfa ${d.page}</b>${d.sheet ? ` (pafta ${esc(d.sheet)})` : ""}`).join("<br>");
+}
+
+/* ---------- üst bilgi ---------- */
+function renderMeta() {
+  $("#docNo").textContent = (DATA.meta.docNo || "–").replace(/\s*\/\s*[A-Z]+$/, "");
+  $("#rev").textContent = DATA.meta.rev || "–";
+  $("#drawTitle").textContent = `${DATA.meta.title || DATA.meta.fileName || "Kablo çizimi"}: ${DATA.matrix.rows.length} kablo grubu, ${allTypes().length} tip. Kablo tablosu PDF sayfa ${DATA.matrix.page}'den okundu${DATA.features ? `, tip açıklamaları sayfa ${DATA.features.page}'den` : ""}.`;
+  $("#resetBtn").hidden = !custom;
+}
+function renderGrid() {
+  const g = $("#typegrid"); const info = DATA.features ? DATA.features.types : {};
+  g.innerHTML = allTypes().map(t => {
+    const dead = /IPTAL/i.test((info[t] || {}).desc || "") || !rowsFor(t).length;
+    const pressed = t === state.a || (state.mode === "cmp" && t === state.b);
+    const cls = [dead ? "dead" : "", state.mode === "cmp" && t === state.b ? "selB" : ""].join(" ");
+    return `<button type="button" class="${cls}" data-t="${t}" aria-pressed="${pressed}" title="${esc((info[t]||{}).desc||"")}">${t}</button>`;
+  }).join("");
+}
+
+/* ---------- tip özeti ---------- */
+function renderSummary() {
+  const t = state.a;
+  if (!t) return `<p class="empty">Bir tip numarası yazın ya da yukarıdan seçin.</p>`;
+  const info = typeInfo(t), rows = rowsFor(t);
+  const nC = rows.filter(r => !r.note).reduce((s, r) => s + r.cables.length, 0);
+  const totalLen = rows.filter(r => !r.note).reduce((s, r) => s + r.cables.reduce((ss, c) => ss + (Number((DATA.lengths || {})[c.from + " \u2192 " + c.to]) || 0), 0), 0);
+  const feats = info.features.length ? info.features.map(f => `<span class="chip">${esc(f)}</span>`).join("") : `<span class="chip none">Ek opsiyon işaretli değil</span>`;
+  let h = `<div class="typehead"><div class="tnum"><small>Tip</small>${t}</div><div>
+    <p class="tdesc">${esc(info.desc || "Açıklama tablosunda yok")}</p>
+    <div class="chips">${feats}</div>
+    <p class="meta"><b>${rows.filter(r=>!r.note).length}</b> kablo grubu, <b>${nC}</b> kablo${rows.some(r=>r.note) ? ", 1 alternatif set" : ""}
+      ${totalLen > 0 ? `&nbsp;—&nbsp; <b style="color:var(--warn)">Toplam Metraj: ${totalLen} mm (${(totalLen/1000).toFixed(2)} m)</b>` : ''}
+    </p>
+    ${drawingsFor(t) ? `<p class="meta">${drawingsFor(t)}</p>` : ""}
+  </div></div>`;
+  if (rows.length) h += `<div class="actions"><button type="button" class="btn primary" id="pdfType">Tip ${t} kablo listesini PDF indir</button><span class="meta">Üretim için yazdırılabilir föy</span></div>` + similarBlock(t);
+  if (!rows.length) return h + `<p class="empty">Kablo tablosunda Tip ${t} için işaretli satır yok${/IPTAL/i.test(info.desc) ? " (tip iptal edilmiş)" : ""}.</p>`;
+  h += `<div class="groups">` + rows.map(r => `<article class="grp${r.note ? " alt" : ""}">
+    <header><h3>${esc(groupName(r))}</h3><span class="refs">Ref <b>${esc(refLabel(r))}</b></span></header>
+    ${r.note ? `<p class="altnote">${esc(altText(r))}</p>` : ""}
+    <div class="tbl"><table><thead><tr><th>Kablo</th><th>Bağlantı</th><th>Kesit</th><th>Renk</th></tr></thead>
+    <tbody>${r.cables.map(c => cableRow(c)).join("")}</tbody></table></div></article>`).join("") + `</div>`;
+  return h;
+}
+
+/* ---------- karşılaştırma ---------- */
+function renderCompare() {
+  const types = allTypes();
+  const opt = (sel) => `<option value="">Seçin</option>` + types.map(t => `<option value="${t}"${t === sel ? " selected" : ""}>Tip ${t}${typeInfo(t).desc ? " – " + esc(typeInfo(t).desc) : ""}</option>`).join("");
+  let h = `<div class="cmpbar"><label>Birinci tip<select id="selA">${opt(state.a)}</select></label><span class="vs">ile</span><label>İkinci tip<select id="selB">${opt(state.b)}</select></label></div>`;
+  const A = state.a, B = state.b;
+  if (A && !B) return h + similarBlock(A) + `<p class="empty">${tp(A, "acc")} karşılaştırmak için ikinci tipi seçin ya da yukarıdaki listeden “Farkları gör”e basın.</p>`;
+  if (!A || !B) return h + `<p class="empty">Karşılaştırmak için iki tip seçin. Örneğin üstteki kutuya “15 55” yazın.</p>`;
+  if (A === B) return h + `<p class="empty">Aynı tipi seçtiniz. Farklı iki tip seçin.</p>`;
+  const iA = typeInfo(A), iB = typeInfo(B);
+  const rA = rowsFor(A), rB = rowsFor(B);
+  const fOnlyA = iA.features.filter(f => !iB.features.includes(f)), fOnlyB = iB.features.filter(f => !iA.features.includes(f));
+  const fBoth = iA.features.filter(f => iB.features.includes(f));
+  const chipsFor = (only, both, cls) => (only.map(f => `<span class="chip ${cls}">${esc(f)}</span>`).join("") + both.map(f => `<span class="chip">${esc(f)}</span>`).join("")) || `<span class="chip none">Ek opsiyon yok</span>`;
+  h += `<div class="cmphead">
+    <div><div class="tnum"><small>Tip</small>${A}</div><p class="tdesc">${esc(iA.desc)}</p><div class="chips">${chipsFor(fOnlyA, fBoth, "a")}</div></div>
+    <div><div class="tnum"><small>Tip</small>${B}</div><p class="tdesc">${esc(iB.desc)}</p><div class="chips">${chipsFor(fOnlyB, fBoth, "b")}</div></div></div>`;
+
+  // kablo bazında
+  const mapOf = (rows) => { const m = new Map(); rows.forEach(r => r.cables.forEach(c => m.set(cableKey(r, c), { c, r }))); return m; };
+  const mA = mapOf(rA), mB = mapOf(rB);
+  const changed = [], onlyA = [], onlyB = [];
+  mA.forEach((v, k) => { if (!mB.has(k)) onlyA.push(v); else { const w = mB.get(k); if (w.c.sec !== v.c.sec || colorName(w.c.color) !== colorName(v.c.color)) changed.push([v, w]); } });
+  mB.forEach((v, k) => { if (!mA.has(k)) onlyB.push(v); });
+  // grup bazında
+  const gKey = (r) => r.refs.join("/") + (r.note ? "#alt" : "");
+  const gA = new Set(rA.map(gKey)), gB = new Set(rB.map(gKey));
+  const gOnlyA = rA.filter(r => !gB.has(gKey(r))), gOnlyB = rB.filter(r => !gA.has(gKey(r))), gBoth = rA.filter(r => gB.has(gKey(r)));
+
+  const nDiff = changed.length + onlyA.length + onlyB.length;
+  h += `<div class="actions"><button type="button" class="btn primary" id="pdfCmp">Karşılaştırma föyünü PDF indir</button><span class="meta">Farklar, benzer tipler ve imza alanı ile yazdırılabilir</span></div>`;
+  h += `<p class="verdict">${nDiff === 0 && !gOnlyA.length && !gOnlyB.length ? `Tip ${A} ve Tip ${B} aynı kablo setini kullanıyor.` :
+     `${gOnlyA.length + gOnlyB.length} kablo grubu ve ${nDiff} kablo farklı. ${gBoth.length} grup ortak.`}</p>`;
+
+  if (changed.length) {
+    h += `<h2 class="sec">Aynı bağlantı, farklı kablo <span class="n">${changed.length}</span></h2><div class="tbl grplist"><table>
+      <thead><tr><th>Bağlantı</th><th><span class="tagA">Tip ${A}</span></th><th><span class="tagB">Tip ${B}</span></th></tr></thead><tbody>` +
+      changed.map(([v, w]) => `<tr class="diffrow"><td class="conn">${esc(v.c.from)}<span class="arr">→</span>${esc(v.c.to)}</td>
+        <td class="side"><span class="wire" style="${wireStyle(v.c.color, v.c.sec)};width:40px;margin-right:12px"></span><b>${esc(v.c.sec)} mm²</b> ${esc(colorName(v.c.color))}<br><small>Ref ${esc(refLabel(v.r))}</small></td>
+        <td class="side"><span class="wire" style="${wireStyle(w.c.color, w.c.sec)};width:40px;margin-right:12px"></span><b>${esc(w.c.sec)} mm²</b> ${esc(colorName(w.c.color))}<br><small>Ref ${esc(refLabel(w.r))}</small></td></tr>`).join("") + `</tbody></table></div>`;
+  }
+  const listOnly = (arr, t, cls) => {
+    if (!arr.length) return `<p class="meta">Yok.</p>`;
+    const byRow = new Map(); arr.forEach(v => { if (!byRow.has(v.r)) byRow.set(v.r, []); byRow.get(v.r).push(v.c); });
+    const htmls = [];
+    byRow.forEach((cs, r) => {
+      htmls.push(`<div class="grp${r.note ? " alt" : ""}" style="margin-bottom:10px;border-left-color:var(--${cls})"><header><h3>${esc(groupName(r))}</h3><span class="refs">Ref <b>${esc(refLabel(r))}</b></span></header>
+      ${r.note ? `<p class="altnote">${esc(altText(r))}</p>` : ""}<div class="tbl"><table><tbody>${cs.map(c => cableRow(c)).join("")}</tbody></table></div></div>`);
+    });
+    return htmls.join("");
+  };
+  h += `<h2 class="sec">Sadece bir tipte olan kablolar <span class="n">${onlyA.length + onlyB.length}</span></h2>
+    <div class="split"><div class="col"><h3><span class="tagA">Tip ${A}</span> sadece bu tipte</h3>${listOnly(onlyA, A, "a")}</div>
+    <div class="col"><h3><span class="tagB">Tip ${B}</span> sadece bu tipte</h3>${listOnly(onlyB, B, "b")}</div></div>`;
+
+  // grup tablosu
+  const allG_map = new Map();
+  rA.concat(rB).forEach(r => allG_map.set(gKey(r), r));
+  const allG = [];
+  allG_map.forEach(v => allG.push(v));
+  allG.sort((x, y) => DATA.matrix.rows.indexOf(x) - DATA.matrix.rows.indexOf(y));
+  const diffG = allG.filter(r => gA.has(gKey(r)) !== gB.has(gKey(r)));
+  const grpTable = (list) => `<div class="tbl"><table><thead><tr><th>Kablo grubu</th><th>Ref</th><th class="mark">Tip ${A}</th><th class="mark">Tip ${B}</th></tr></thead><tbody>` +
+    list.map(r => { const a = gA.has(gKey(r)), b = gB.has(gKey(r)); return `<tr${a !== b ? ' class="diffrow"' : ""}><td>${esc(groupName(r))}${r.note ? " <small>(alternatif)</small>" : ""}</td><td>${esc(refLabel(r))}</td>
+      <td class="mark ${a ? "y" : "n"}">${a ? "✓" : "–"}</td><td class="mark ${b ? "y" : "n"}">${b ? "✓" : "–"}</td></tr>`; }).join("") + `</tbody></table></div>`;
+  h += `<h2 class="sec">Kablo grupları (ref) <span class="n">${diffG.length} farklı, ${gBoth.length} ortak</span></h2>`;
+  h += diffG.length ? `<div class="grplist">${grpTable(diffG)}</div>` : `<p class="meta">Grup farkı yok.</p>`;
+  if (gBoth.length) h += `<details class="common"><summary>Ortak ${gBoth.length} grubu göster</summary>${grpTable(gBoth)}</details>`;
+  h += `<div style="margin-top:26px">${similarBlock(A, { selected: B })}</div>`;
+  return h;
+}
+
+/* ---------- tüm tablo ---------- */
+function renderMatrix() {
+  const types = DATA.matrix.types;
+  let h = `<p class="meta" style="margin-bottom:10px">Çizimdeki kablo tablosunun aynısı. Sütun başlığına tıklayarak o tipin özetini açın.</p><div class="matrix"><table><thead><tr><th style="left:0;z-index:3;position:sticky">Kablo grubu / ref</th>` +
+    types.map(t => `<th data-t="${t}" class="${t === state.a ? "hl" : ""}">${t}</th>`).join("") + `</tr></thead><tbody>`;
+  h += DATA.matrix.rows.map(r => `<tr><th>${esc(groupName(r))}${r.note ? " (alt.)" : ""}<small>${esc(refLabel(r))}</small></th>` +
+    types.map(t => r.types.includes(t) ? `<td class="on${t === state.a ? " hl" : ""}">*</td>` : `<td class="${t === state.a ? "hl" : ""}"></td>`).join("") + `</tr>`).join("");
+  return h + `</tbody></table></div>`;
+}
+
+/* Türkçe sayı ekleri: Tip 55'e, Tip 46'da … */
+function trSuffix(t, kind) {
+  const n = parseInt(t, 10); const T = { dat: 0, loc: 1, acc: 2 }[kind];
+  const D = {1:["e","de","i"],2:["ye","de","yi"],3:["e","te","ü"],4:["e","te","ü"],5:["e","te","i"],6:["ya","da","yı"],7:["ye","de","yi"],8:["e","de","i"],9:["a","da","u"],
+    10:["a","da","u"],20:["ye","de","yi"],30:["a","da","u"],40:["a","ta","ı"],50:["ye","de","yi"],60:["a","ta","ı"],70:["e","te","i"],80:["e","de","i"],90:["a","da","ı"],100:["e","de","ü"],1000:["e","de","i"]};
+  let k = n % 10 || (n % 100) || (n % 1000 ? 100 : 1000);
+  if (!(n % 10) && n % 100) k = n % 100;
+  return D[k] ? D[k][T] : ["e","de","i"][T];
+}
+const tp = (t, kind) => `Tip ${t}'${trSuffix(t, kind)}`;
+/* ---------- benzerlik ---------- */
+const sigOf = (c) => c.sec.replace(/0+$/, "").replace(/\.$/, "") + "|" + colorName(c.color);
+function cableMap(t) { const m = new Map(); rowsFor(t).forEach(r => r.cables.forEach(c => m.set(cableKey(r, c), { c, r }))); return m; }
+const isLive = (t) => rowsFor(t).length > 0 && !/IPTAL/i.test(typeInfo(t).desc || "");
+function diffStats(a, b) {
+  const mA = cableMap(a), mB = cableMap(b);
+  let same = 0; const changed = [], onlyA = [], onlyB = [];
+  mA.forEach((v, k) => { const w = mB.get(k); if (!w) onlyA.push(v); else if (sigOf(w.c) !== sigOf(v.c)) changed.push([v, w]); else same++; });
+  mB.forEach((v, k) => { if (!mA.has(k)) onlyB.push(v); });
+  const diff = changed.length + onlyA.length + onlyB.length;
+  const union = same + diff;
+  return { same, changed, onlyA, onlyB, diff, pct: union ? Math.round(same * 100 / union) : 0 };
+}
+function featOverlap(a, b) { const fa = typeInfo(a).features, fb = typeInfo(b).features; const u = new Set(); fa.concat(fb).forEach(x => u.add(x)); if (!u.size) return 1; return fa.filter(f => fb.includes(f)).length / u.size; }
+function getVolume(t) {
+  const info = typeInfo(t);
+  if (!info || !info.desc) return "";
+  const match = info.desc.match(/P\d+/i);
+  return match ? match[0].toUpperCase() : "";
+}
+function similarTypes(t, n) {
+  const tVol = getVolume(t);
+  return allTypes().filter(u => u !== t && isLive(u)).map(u => {
+    const stats = diffStats(t, u);
+    const fo = featOverlap(t, u);
+    const uVol = getVolume(u);
+    const volMatch = (tVol && uVol && tVol === uVol) ? 1 : 0;
+    const res = { t: u, fo: fo, volMatch: volMatch, uVol: uVol }; Object.keys(stats).forEach(k => res[k] = stats[k]); return res;
+  })
+  .sort((x, y) => {
+    if (x.volMatch !== y.volMatch) return y.volMatch - x.volMatch;
+    if (x.diff !== y.diff) return x.diff - y.diff;
+    if (x.fo !== y.fo) return y.fo - x.fo;
+    return sortKey(x.t) - sortKey(y.t);
+  })
+  .slice(0, n);
+}
+function similarBlock(t, opts = {}) {
+  if (!isLive(t)) return "";
+  const n = state.simN || 5;
+  const list = similarTypes(t, n);
+  const rows = list.map((s, i) => `<tr${opts.selected === s.t ? ' class="simsel"' : ""}>
+      <td class="rank">${i + 1}</td>
+      <td><b>Tip ${s.t}</b><br><small>${esc(typeInfo(s.t).desc)}</small>
+          ${s.volMatch ? `<br><span class="chip a" style="font-size:10px;padding:0 4px;margin-top:2px">Aynı Hacim (${s.uVol})</span>` : ''}
+      </td>
+      <td class="simbar"><span class="bar"><span style="width:${s.pct}%"></span></span><small>%${s.pct} aynı</small></td>
+      <td class="simdiff">${s.diff === 0 ? "<b>Aynı kablo seti</b>" : `<b>${s.diff}</b> kablo farkı<br><small>${s.changed.length} değişen, ${s.onlyA.length} eksik, ${s.onlyB.length} fazla</small>`}</td>
+      <td><button type="button" class="btn small" data-cmp="${s.t}">${opts.selected === s.t ? "Seçili" : "Farkları gör"}</button></td></tr>`).join("");
+  return `<div class="simbox"><div class="simhead"><h2>${tp(t, "dat")} en çok benzeyen tipler</h2>
+    <div class="seg" role="group" aria-label="Kaç tip gösterilsin">${[3, 5, 10].map(k => `<button type="button" data-simn="${k}" aria-pressed="${n === k}">İlk ${k}</button>`).join("")}</div></div>
+    <p class="meta">Kablo setleri karşılaştırılarak sıralandı: <b>Öncelikle "aynı hacimde (kasa boyutunda)" olanlar</b>, ardından en az kablo farkı olanlar en üstte listelenir. "Eksik" ${tp(t, "loc")} olup diğerinde olmayan, "fazla" diğerinde olup ${tp(t, "loc")} olmayan kablolardır.</p>
+    <div class="tbl"><table class="simtbl"><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ---------- PDF föyü ---------- */
+const PDF_COL = { RED:"#C62828", BLUE:"#1F5FBF", BROWN:"#6D4C2F", GRAY:"#8E959A", GREY:"#8E959A", ORANGE:"#E8761E", WHITE:"#FFFFFF", YELLOW:"#F2C318", GREEN:"#2E8B3A", PINK:"#E86FA8", PURPLE:"#7B3FA0", PURPELE:"#7B3FA0", BLACK:"#1A1A1A" };
+class Sheet {
+  constructor(title, sub) {
+    this.p = new MiniPDF(PDF_FONTS); this.title = title; this.sub = sub;
+    this.L = 14; this.R = 196; this.top = 14; this.bottom = 282; this.y = this.top;
+    this.head(true);
+  }
+  head(first) {
+    const p = this.p;
+    if (first) {
+      p.text(this.title, this.L, this.y + 7, { bold: true, size: 17 });
+      p.text(this.sub, this.L, this.y + 13, { size: 9, color: "#55636A" });
+      this.y += 17; p.line(this.L, this.y, this.R, this.y, { lw: 1.2 }); this.y += 5;
+    } else {
+      p.text(this.title, this.L, this.y + 4, { bold: true, size: 9 });
+      p.text(this.sub, this.R, this.y + 4, { size: 8, color: "#55636A", align: "right" });
+      this.y += 6; p.line(this.L, this.y, this.R, this.y, { lw: 0.6 }); this.y += 4;
+    }
+  }
+  need(h) { if (this.y + h > this.bottom) { this.p.addPage(); this.y = this.top; this.head(false); return true; } return false; }
+  h2(t, right) {
+    this.need(16); this.y += 3;
+    this.p.text(t, this.L, this.y + 5, { bold: true, size: 12 });
+    if (right) this.p.text(right, this.R, this.y + 5, { size: 9, color: "#55636A", align: "right" });
+    this.y += 7; this.p.line(this.L, this.y, this.R, this.y, { lw: 0.8 }); this.y += 2;
+  }
+  para(t, o = {}) {
+    const size = o.size || 9.5, lh = size * 0.45;
+    const lines = this.p.wrap(t, this.R - this.L - (o.indent || 0), { size, bold: o.bold });
+    for (let l_idx = 0; l_idx < lines.length; l_idx++) { const l = lines[l_idx]; this.need(lh + 1); this.p.text(l, this.L + (o.indent || 0), this.y + lh, { size, bold: o.bold, color: o.color }); this.y += lh + 0.6; }
+    this.y += o.after ?? 1.5;
+  }
+  wire(x, y, w, color, sec) {
+    const parts = String(color).toUpperCase().split(/[^A-Z]+/).filter(k => PDF_COL[k]);
+    const h = Math.min(2.6, 0.9 + parseFloat(sec) * 1.1);
+    const yy = y - h / 2;
+    this.p.rect(x - 1.6, y - 0.35, 1.8, 0.7, { fill: "#A8A8A8" });
+    this.p.rect(x + w - 0.2, y - 0.35, 1.8, 0.7, { fill: "#A8A8A8" });
+    this.p.rect(x, yy, w, h, { fill: PDF_COL[parts[0]] || "#999999", stroke: parts[0] === "WHITE" ? "#8E959A" : null, lw: 0.3 });
+    if (parts[1]) for (let s = x + 1.5; s < x + w - 1; s += 3.2) this.p.rect(s, yy, 1.1, h, { fill: PDF_COL[parts[1]] });
+  }
+  // cols: [{t, w, align}], rows: array of arrays; hücre: string | {wire:[color,sec], text} | {text, bold}
+  table(cols, rows, o = {}) {
+    const p = this.p, pad = 1.6, size = o.size || 8.8, lh = size * 0.42;
+    const isO = (c) => c !== null && typeof c === "object";
+    const xs = []; let x = this.L; cols.forEach(c => { xs.push(x); x += c.w; });
+    const drawHead = () => {
+      p.rect(this.L, this.y, this.R - this.L, 6, { fill: "#E6EAE4" });
+      cols.forEach((c, i) => p.text(c.t, xs[i] + pad, this.y + 4.2, { bold: true, size: 8, color: "#33424A" }));
+      this.y += 6;
+    };
+    this.need(14); drawHead();
+    rows.forEach((r, ri) => {
+      const cells = Array.isArray(r) ? r : r.cells; const rowFill = Array.isArray(r) ? null : r.fill;
+      const wrapped = cells.map((cell, i) => {
+        const txt = typeof cell === "object" && cell ? (cell.text ?? "") : String(cell ?? "");
+        const off = typeof cell === "object" && cell && cell.wire ? 14 : 0;
+        return p.wrap(txt, cols[i].w - pad * 2 - off, { size, bold: isO(cell) && cell.bold });
+      });
+      const h = Math.max(...wrapped.map(w => w.length)) * (lh + 0.7) + pad * 2;
+      if (this.need(h)) drawHead();
+      if (rowFill) p.rect(this.L, this.y, this.R - this.L, h, { fill: rowFill });
+      cells.forEach((cell, i) => {
+        let tx = xs[i] + pad;
+        if (cell && typeof cell === "object" && cell.wire) { this.wire(tx + 1.4, this.y + pad + lh * 0.55, 10, cell.wire[0], cell.wire[1]); tx += 14; }
+        wrapped[i].forEach((l, k) => p.text(l, cols[i].align === "center" ? xs[i] + cols[i].w / 2 : tx, this.y + pad + lh + k * (lh + 0.7), { size, bold: isO(cell) && cell.bold, align: cols[i].align, color: isO(cell) ? cell.color : undefined }));
+      });
+      this.y += h; p.line(this.L, this.y, this.R, this.y, { lw: 0.25, color: "#C9D0C8" });
+    });
+    this.y += 3;
+  }
+  box(x, w, h, fill) { this.p.rect(x, this.y, w, h, { fill, stroke: "#1D282C", lw: 0.8 }); }
+  signatures() {
+    this.need(28); this.y += 6;
+    const labels = ["Hazırlayan", "Kontrol eden", "Üretim / onay"]; const w = (this.R - this.L) / 3;
+    labels.forEach((l, i) => { const x = this.L + i * w; this.p.rect(x, this.y, w, 20, { stroke: "#1D282C", lw: 0.6 }); this.p.text(l, x + 2, this.y + 4.5, { size: 8, color: "#55636A" }); this.p.text("Ad / imza / tarih", x + 2, this.y + 18, { size: 7, color: "#9AA4A6" }); });
+    this.y += 22;
+  }
+  finish(foot) {
+    const n = this.p.pages.length;
+    this.p.pages.forEach((pg, i) => { this.p.cur = pg; this.p.line(this.L, 287, this.R, 287, { lw: 0.3, color: "#9AA4A6" }); this.p.text(foot, this.L, 291, { size: 7.5, color: "#55636A" }); this.p.text(`Sayfa ${i + 1} / ${n}`, this.R, 291, { size: 7.5, color: "#55636A", align: "right" }); });
+    return this.p.output();
+  }
+}
+const todayTR = () => new Date().toLocaleDateString("tr-TR");
+const drawingLabel = () => `${(DATA.meta.docNo || "").replace(/\s+/g, " ") || DATA.meta.fileName || "çizim"}`;
+const featText = (t) => typeInfo(t).features.join(", ") || "Ek opsiyon yok";
+const cableCells = (c) => [{ wire: [c.color, c.sec], text: `${c.sec} mm² ${colorName(c.color)}` }, `${c.from} → ${c.to}`];
+
+function buildComparePDF(A, B) {
+  const d = diffStats(A, B);
+  const S = new Sheet(`Kablo karşılaştırma föyü: Tip ${A} ve Tip ${B}`, `Çizim ${drawingLabel()}   Hazırlanma tarihi ${todayTR()}`);
+  const half = (S.R - S.L) / 2;
+  // tip kutuları
+  S.box(S.L, half, 30, "#D6ECE8"); S.box(S.L + half, half, 30, "#F1DDE8");
+  [[A, S.L], [B, S.L + half]].forEach(([t, x], i) => {
+    S.p.text(i === 0 ? "İncelenen tip" : "Benzer (karşılaştırılan) tip", x + 3, S.y + 5, { size: 8, color: "#33424A" });
+    S.p.text(`Tip ${t}`, x + 3, S.y + 13, { bold: true, size: 18 });
+    S.p.text(typeInfo(t).desc || "", x + 3, S.y + 19, { bold: true, size: 10 });
+    S.p.wrap("Opsiyonlar: " + featText(t), half - 6, { size: 8 }).slice(0, 2).forEach((l, k) => S.p.text(l, x + 3, S.y + 24 + k * 3.6, { size: 8 }));
+  });
+  S.y += 34;
+  // sonuç
+  const verdict = d.diff === 0 ? `Tip ${A} ile Tip ${B} aynı kablo setini kullanıyor. Kablo farkı yok.`
+    : `Tip ${A}, Tip ${B} ile ${d.same} kablo ortak kullanıyor (%${d.pct}). Fark: ${d.changed.length} kablo değişiyor, ${d.onlyA.length} kablo sadece ${tp(A, "loc")}, ${d.onlyB.length} kablo sadece ${tp(B, "loc")} var.`;
+  const vl = S.p.wrap(verdict, S.R - S.L - 8, { size: 11, bold: true });
+  S.p.rect(S.L, S.y, S.R - S.L, vl.length * 5.2 + 5, { fill: "#F7E8CC", stroke: "#B86E00", lw: 0.8 });
+  vl.forEach((l, k) => S.p.text(l, S.L + 4, S.y + 6.5 + k * 5.2, { bold: true, size: 11 }));
+  S.y += vl.length * 5.2 + 9;
+  const fa = typeInfo(A).features, fb = typeInfo(B).features;
+  const oa = fa.filter(f => !fb.includes(f)), ob = fb.filter(f => !fa.includes(f));
+  if (oa.length || ob.length) S.para(`Opsiyon farkı: sadece ${tp(A, "loc")} ${oa.join(", ") || "yok"}; sadece ${tp(B, "loc")} ${ob.join(", ") || "yok"}.`, { size: 9.5 });
+
+  if (d.changed.length) {
+    S.h2("1. Aynı bağlantı, farklı kablo", `${d.changed.length} kablo`);
+    S.table([{ t: "Bağlantı", w: 62 }, { t: `${tp(B, "loc")}`, w: 60 }, { t: `${tp(A, "loc")} kullanılacak`, w: 60 }],
+      d.changed.map(([v, w]) => ({ fill: "#FBF3E2", cells: [`${v.c.from} → ${v.c.to}`, { wire: [w.c.color, w.c.sec], text: `${w.c.sec} mm² ${colorName(w.c.color)} (Ref ${refLabel(w.r)})` }, { wire: [v.c.color, v.c.sec], text: `${v.c.sec} mm² ${colorName(v.c.color)} (Ref ${refLabel(v.r)})`, bold: true }] })));
+  }
+  const onlyTable = (arr) => S.table([{ t: "Kablo", w: 44 }, { t: "Bağlantı", w: 76 }, { t: "Grup", w: 36 }, { t: "Ref", w: 26 }],
+    arr.map(v => cableCells(v.c).concat([groupName(v.r) + (v.r.note ? " (alternatif)" : ""), refLabel(v.r)])));
+  let n = d.changed.length ? 2 : 1;
+  S.h2(`${n++}. Sadece ${tp(A, "loc")} olan kablolar`, d.onlyA.length ? `${d.onlyA.length} kablo` : "yok");
+  if (d.onlyA.length) onlyTable(d.onlyA); else S.para(`${tp(B, "loc")} olmayan ek kablo yok.`);
+  S.h2(`${n++}. Sadece ${tp(B, "loc")} olan kablolar`, d.onlyB.length ? `${d.onlyB.length} kablo` : "yok");
+  if (d.onlyB.length) onlyTable(d.onlyB); else S.para(`${tp(A, "loc")} eksik kalan kablo yok.`);
+
+  // benzer tipler
+  const sims = similarTypes(A, 5);
+  S.h2(`${n++}. ${tp(A, "dat")} en çok benzeyen tipler`);
+  S.table([{ t: "Sıra", w: 12, align: "center" }, { t: "Tip", w: 18 }, { t: "Açıklama", w: 70 }, { t: "Ortak", w: 22, align: "center" }, { t: "Kablo farkı", w: 60 }],
+    sims.map((s, i) => ({ fill: s.t === B ? "#F1DDE8" : null, cells: [String(i + 1), { text: `Tip ${s.t}`, bold: true }, typeInfo(s.t).desc, `%${s.pct}`, s.diff === 0 ? "Aynı kablo seti" : `${s.diff} (${s.changed.length} değişen, ${s.onlyA.length} eksik, ${s.onlyB.length} fazla)`] })));
+  S.signatures();
+  return S.finish(`Kablo tip asistanı   ${drawingLabel()}   Kaynak: kablo tablosu PDF sayfa ${DATA.matrix.page}. Üretimden önce teknik resimle doğrulayın.`);
+}
+
+function buildTypePDF(T) {
+  const S = new Sheet(`Tip ${T} kablo listesi`, `Çizim ${drawingLabel()}   Hazırlanma tarihi ${todayTR()}`);
+  S.p.text(`Tip ${T}`, S.L, S.y + 9, { bold: true, size: 24 });
+  S.p.text(typeInfo(T).desc || "", S.L + 40, S.y + 5, { bold: true, size: 11 });
+  S.p.text("Opsiyonlar: " + featText(T), S.L + 40, S.y + 10.5, { size: 9 });
+  S.y += 15;
+  const dr = (DATA.drawings && DATA.drawings[T]) || [];
+  if (dr.length) S.para(dr.map(x => `${x.kind}: PDF sayfa ${x.page}${x.sheet ? " (pafta " + x.sheet + ")" : ""}`).join("   "), { size: 9, color: "#55636A" });
+  const sims = similarTypes(T, 5);
+  if (sims.length) S.para("En çok benzeyen tipler: " + sims.map(s => `Tip ${s.t} (${s.diff === 0 ? "aynı set" : s.diff + " kablo farkı"})`).join(", "), { size: 9.5, bold: true });
+  rowsFor(T).forEach(r => {
+    S.h2(groupName(r) + (r.note ? " (alternatif)" : ""), "Ref " + refLabel(r));
+    if (r.note) S.para(altText(r), { size: 8.5, color: "#8A5300" });
+    S.table([{ t: "Kablo", w: 50 }, { t: "Bağlantı", w: 132 }], r.cables.map(c => cableCells(c)));
+  });
+  S.signatures();
+  return S.finish(`Kablo tip asistanı   ${drawingLabel()}   Kaynak: kablo tablosu PDF sayfa ${DATA.matrix.page}. Üretimden önce teknik resimle doğrulayın.`);
+}
+
+const dlPromise = (window.claude && typeof window.claude.use === "function") ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+async function savePDF(bytes, filename, btn) {
+  const old = btn ? btn.textContent : "";
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = "Hazırlanıyor…"; }
+    const dl = await dlPromise;
+    if (dl) {
+      await dl.save({ filename, data: new Blob([bytes]) });
+      setStatus(`${filename} kaydedildi.`);
+    } else {
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setStatus(`${filename} indirildi.`);
+    }
+  } catch (e) {
+    if (e && e.code === "declined") setStatus("PDF kaydı iptal edildi.");
+    else setStatus("PDF kaydedilemedi: " + (e && e.message ? e.message : e), true);
+  } finally { if (btn) { btn.disabled = false; btn.textContent = old; } }
+}
+window.__buildComparePDF = buildComparePDF; window.__buildTypePDF = buildTypePDF;
+
+window.updateLength = (conn, val) => {
+  DATA.lengths = DATA.lengths || {};
+  DATA.lengths[conn] = val;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); } catch(e){}
+  render();
+};
+
+function renderLength() {
+  const S = new Set();
+  DATA.matrix.rows.forEach(r => r.cables.forEach(c => S.add(c.from + " \u2192 " + c.to)));
+  const uniqueConns = [];
+  S.forEach(v => uniqueConns.push(v));
+  uniqueConns.sort();
+  DATA.lengths = DATA.lengths || {};
+  
+  let rows = uniqueConns.map(conn => {
+     const v = DATA.lengths[conn] || "";
+     return `<tr><td><b>${conn}</b></td>
+     <td><input type="number" value="${v}" onchange="updateLength('${conn}', this.value)" style="width:80px; padding:4px;" placeholder="Boy (mm)"></td></tr>`;
+  }).join("");
+
+  return `<div class="simbox" style="margin-top:16px"><div class="simhead" style="grid-template-columns:1fr"><div>
+      <h2 style="color:var(--warn)">Kablo Boyu (Metraj) Eşleştirme Sözlüğü</h2>
+      <p style="margin-top:4px">PDF geometrisini okumak hatalara açık olduğundan, aşağıdaki tabloda bir defaya mahsus bağlantıların uzunluğunu girebilirsiniz. Girilen değerler otomatik kaydedilir ve Tip Özetlerinde toplam metrajı hesaplar.</p>
+    </div></div>
+    <div class="tbl"><table class="simtbl" style="max-width:400px"><thead><tr><th style="text-align:left; padding:8px">Bağlantı Yönü</th><th style="text-align:left; padding:8px">Uzunluk (mm)</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ---------- akış ---------- */
+function render() {
+  [].forEach.call(document.querySelectorAll(".modes button"), b => b.setAttribute("aria-selected", String(b.dataset.mode === state.mode)));
+  renderGrid();
+  const p = $("#panel");
+  p.innerHTML = state.mode === "sum" ? renderSummary() : state.mode === "cmp" ? renderCompare() : state.mode === "len" ? renderLength() : renderMatrix();
+  const sa = $("#selA"), sb = $("#selB");
+  if (sa) sa.onchange = () => { state.a = sa.value || null; render(); syncHash(); };
+  if (sb) sb.onchange = () => { state.b = sb.value || null; render(); syncHash(); };
+  [].forEach.call(p.querySelectorAll("[data-cmp]"), b => b.onclick = () => { state.b = b.dataset.cmp; state.mode = "cmp"; $("#q").value = state.a + " " + state.b; render(); syncHash(); window.scrollTo({ top: $(".modes").offsetTop - 10, behavior: "smooth" }); });
+  [].forEach.call(p.querySelectorAll("[data-simn]"), b => b.onclick = () => { state.simN = +b.dataset.simn; render(); });
+  const pc = $("#pdfCmp"); if (pc) pc.onclick = () => savePDF(buildComparePDF(state.a, state.b), `Tip${state.a}_Tip${state.b}_karsilastirma.pdf`, pc);
+  const pt = $("#pdfType"); if (pt) pt.onclick = () => savePDF(buildTypePDF(state.a), `Tip${state.a}_kablo_listesi.pdf`, pt);
+  [].forEach.call(p.querySelectorAll("thead th[data-t]"), th => th.onclick = () => { state.a = th.dataset.t; state.mode = "sum"; render(); syncHash(); });
+}
+function syncHash() {
+  const h = state.mode === "cmp" ? `k=${state.a || ""},${state.b || ""}` : state.mode === "mat" ? "tablo" : (state.a ? `tip=${state.a}` : "");
+  try { history.replaceState(null, "", "#" + h); } catch (e) {}
+}
+function readHash() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (h.startsWith("tip=")) { state.a = normType(h.slice(4)); state.mode = "sum"; }
+  else if (h.startsWith("k=")) { const [a, b] = h.slice(2).split(","); state.a = normType(a); state.b = normType(b); state.mode = "cmp"; }
+  else if (h === "tablo") state.mode = "mat";
+}
+$("#qform").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const raw = $("#q").value;
+  const nums = (raw.match(/\d{1,4}/g) || []);
+  if (!nums.length) { setStatus("Bir tip numarası yazın, örneğin 55.", true); return; }
+  const ts = nums.map(normType);
+  const bad = nums.filter((n, i) => !ts[i]);
+  if (bad.length) { setStatus(`Bu çizimde şu tip yok: ${bad.join(", ")}. Mevcut tipler aşağıda listelendi.`, true); return; }
+  setStatus("");
+  if (ts.length >= 2) { state.a = ts[0]; state.b = ts[1]; state.mode = "cmp"; }
+  else { state.a = ts[0]; if (state.mode !== "cmp") state.mode = "sum"; else state.mode = "sum"; }
+  render(); syncHash();
+});
+$("#typegrid").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-t]"); if (!b) return;
+  const t = b.dataset.t;
+  if (state.mode === "cmp") {
+    if (!state.a || (state.a && state.b)) { state.a = t; state.b = null; }
+    else state.b = t;
+  } else { state.a = t; if (state.mode === "mat") state.mode = "sum"; }
+  $("#q").value = state.mode === "cmp" ? [state.a, state.b].filter(Boolean).join(" ") : t;
+  render(); syncHash();
+});
+[].forEach.call(document.querySelectorAll(".modes button"), b => b.addEventListener("click", () => { state.mode = b.dataset.mode; render(); syncHash(); }));
+
+/* ---------- PDF yükleme ---------- */
+function setStatus(msg, err) { const s = $("#status"); s.textContent = msg; s.className = err ? "err" : ""; }
+let pdfjsPromise = null;
+function loadPdfjs() {
+  if (!pdfjsPromise) {
+    const base = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VER}/legacy/build/`;
+    pdfjsPromise = (async () => {
+      await import(base + "pdf.min.js");
+      const lib = globalThis.pdfjsLib;
+      lib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+      return lib;
+    })();
+    pdfjsPromise.catch(() => { pdfjsPromise = null; });
+  }
+  return pdfjsPromise;
+}
+$("#uploadBtn").onclick = () => $("#file").click();
+let lastFile = null;
+async function parseFile(f, matrixPage) {
+  const lo = document.getElementById('loadingOverlay');
+  const lt = document.getElementById('loadingText');
+  const updateLoad = (msg) => { if(lo) { lo.classList.add('active'); lt.textContent = msg; } setStatus(msg); };
+  try {
+    updateLoad("PDF okuyucu yükleniyor…");
+    const lib = await loadPdfjs();
+    const buf = new Uint8Array(await f.arrayBuffer());
+    updateLoad("Çizim açılıyor…");
+    const doc = await lib.getDocument({ data: buf, isEvalSupported: false, disableFontFace: true, useSystemFonts: true }).promise;
+    const pp = $("#pagePick");
+    pp.innerHTML = `<option value="">Otomatik bul</option>` + Array.from({ length: doc.numPages }, (_, i) => `<option value="${i + 1}"${matrixPage === i + 1 ? " selected" : ""}>Sayfa ${i + 1}</option>`).join("");
+    $("#pagePickWrap").hidden = false;
+    const res = await parseDrawing(lib, doc, updateLoad, { matrixPage });
+    if(lo) lo.classList.remove('active');
+    if (!res.matrix || !res.matrix.rows.length) {
+      if (res.features) {
+        setStatus(`“${f.name}” içinde özellik/opsiyon tablosu bulundu ancak kablo tablosu (REF sütunu) otomatik bulunamadı. Lütfen yukarıdaki sayfalar listesinden kablo tablosunun olduğu sayfayı seçin.`, true);
+      } else {
+        setStatus(`“${f.name}” içinde kablo tablosu (REF sütunu ve tip başlıkları olan * işaretli tablo) otomatik bulunamadı. “Kablo tablosu sayfası” listesinden doğru sayfayı seçin.`, true);
+      }
+      return;
+    }
+    res.meta.fileName = f.name;
+    DATA = res; custom = true;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(res)); } catch (err) {}
+    if (state.a && !normType(state.a)) state.a = null;
+    if (state.b && !normType(state.b)) state.b = null;
+    if (!state.a) state.a = allTypes().find(t => rowsFor(t).length) || null;
+    renderMeta(); render();
+    if (!matrixPage) pp.value = "";
+    setStatus(`${f.name} yüklendi. Kablo tablosu sayfa ${res.matrix.page}'de bulundu: ${res.matrix.rows.length} kablo grubu, ${allTypes().length} tip.${res.features ? ` Tip açıklama tablosu (Sayfa ${res.features.page}, ${Object.keys(res.features.types).length} tip) bağlandı.` : " Tip açıklama tablosu bulunamadı; sadece kablo tablosu kullanılıyor."}`);
+  } catch (err) {
+    if(lo) lo.classList.remove('active');
+    console.error(err);
+    setStatus("PDF okunamadı: " + (err && err.message ? err.message : err) + ". Başka bir sayfa seçmeyi deneyin ya da dosyayı kontrol edin.", true);
+  }
+}
+$("#file").addEventListener("change", (e) => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf") { setStatus("Lütfen PDF formatındaki teknik resmi seçin.", true); return; }
+  lastFile = f; parseFile(f, null);
+});
+$("#pagePick").addEventListener("change", (e) => { if (lastFile) parseFile(lastFile, e.target.value ? +e.target.value : null); });
+$("#resetBtn").onclick = () => {
+  DATA = DEFAULT_DATA; custom = false; lastFile = null; $("#pagePickWrap").hidden = true;
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  renderMeta(); render(); setStatus("Örnek çizime (D-145540xx00 / BF) dönüldü.");
+};
+
+readHash();
+if (!state.a && state.mode === "sum") state.a = "55";
+if (state.a) $("#q").value = state.mode === "cmp" ? [state.a, state.b].filter(Boolean).join(" ") : state.a;
+renderMeta(); render();
+</script>
+</body>
+</html>
